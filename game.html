@@ -18,17 +18,25 @@ body{height:100dvh;color:var(--ink);font-family:var(--f-d);font-size:15px;
 canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 
 /* colonne de barres, dans la marge gauche */
-#rods{position:absolute;left:0;top:0;bottom:0;width:62px;z-index:3;
-  display:flex;flex-direction:column;justify-content:center;gap:5px;
-  padding:4px 4px 4px calc(4px + env(safe-area-inset-left))}
-.rodbtn{flex:0 0 auto;font-family:var(--f-m);font-size:.58rem;font-weight:600;
+#rods{position:absolute;left:0;top:0;bottom:0;width:clamp(72px,11vw,104px);z-index:3;
+  display:flex;flex-direction:column;gap:6px;
+  padding:6px 6px 6px calc(6px + env(safe-area-inset-left))}
+.rodbtn{flex:1 1 0;min-height:0;font-family:var(--f-m);font-size:.62rem;font-weight:600;
   border:1px solid var(--line);background:rgba(22,29,25,.86);color:var(--ink-3);
-  border-radius:6px;cursor:pointer;padding:.4rem .1rem;line-height:1.15;
-  display:flex;flex-direction:column;align-items:center;gap:.05rem;backdrop-filter:blur(3px)}
-.rodbtn .lab{font-size:.95rem;font-family:var(--f-d);font-weight:800}
+  border-radius:8px;cursor:pointer;padding:.2rem .1rem;line-height:1.1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
+  backdrop-filter:blur(3px)}
+.rodbtn .lab{font-size:clamp(1.15rem,3.4vh,1.7rem);font-family:var(--f-d);font-weight:800;line-height:1}
 .rodbtn.t0{color:var(--red)} .rodbtn.t1{color:var(--blue)}
 .rodbtn.on{border-color:currentColor;background:rgba(79,177,131,.14);box-shadow:inset 0 0 0 1px currentColor}
 .rodbtn.has{outline:2px solid #FFE07A;outline-offset:-2px}
+.autobtn{flex:0 0 auto;font-family:var(--f-m);font-size:.58rem;font-weight:600;letter-spacing:.06em;
+  border:1px solid var(--line);background:rgba(22,29,25,.86);color:var(--ink-3);
+  border-radius:8px;cursor:pointer;padding:.45rem .1rem;line-height:1.15;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;
+  backdrop-filter:blur(3px)}
+.autobtn b{font-family:var(--f-d);font-size:.82rem;font-weight:800;letter-spacing:0}
+.autobtn.on{color:var(--green);border-color:var(--green);background:rgba(79,177,131,.16)}
 
 #pow{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--green);z-index:4}
 #tuneBtn{position:absolute;right:calc(6px + env(safe-area-inset-right));top:6px;z-index:4;
@@ -153,7 +161,7 @@ const S={
   phase:'menu', score:[0,0], me:0, sel:-1,
   ball:{x:W/2,y:H/2,vx:0,vy:0,trap:null},
   holdT:0, flash:0, trail:[], serveTo:1, last:-1, stall:0,
-  matchN:0, chain:0, t0:0, firstGoalMs:null, log:[],
+  matchN:0, chain:0, t0:0, firstGoalMs:null, log:[], auto:false,
 };
 const NET={mode:'off', peer:null, conn:null, code:'', up:false, lastRx:0, err:''};
 RODS.forEach(r=>{r.off=0;r.tgt=0;r.vy=0;r.kick=null;r.aiT=0;r.aiT2=0;});
@@ -164,16 +172,18 @@ const FLIP=()=>S.me===1;
 /* ------------------------------ vue ------------------------------ */
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let V={s:1,ox:0,oy:0};
-const GUT=64, TOPH=34;
+const TOPH=34;
+const GUT=()=>(document.getElementById('rods').offsetWidth||72)+8;
 function resize(){
   const dpr=Math.min(devicePixelRatio||1,2.5);
   const w=innerWidth, h=innerHeight;
   cv.width=Math.max(1,Math.round(w*dpr)); cv.height=Math.max(1,Math.round(h*dpr));
   cv.style.width=w+'px'; cv.style.height=h+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const aw=w-GUT-10, ah=h-TOPH-8;
+  const g=GUT();
+  const aw=w-g-10, ah=h-TOPH-8;
   const s=Math.min(aw/W,ah/H);
-  V.s=s; V.ox=GUT+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
+  V.s=s; V.ox=g+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
 }
 const SX=x=>V.ox+(FLIP()?(W-x):x)*V.s;
 const SY=y=>V.oy+(FLIP()?(H-y):y)*V.s;
@@ -338,6 +348,22 @@ function ai(dt,now){
   }
 }
 
+/* --------------------- sélection automatique --------------------- */
+// choisit la barre la plus pertinente. Elle ne déplace jamais rien :
+// les barres restent entièrement sous le doigt du joueur.
+function autoSel(){
+  if(!S.auto||S.phase!=='play') return;
+  const b=S.ball, mine=MYRODS(S.me);
+  if(b.trap && RODS[b.trap.ri].team===S.me){ S.sel=b.trap.ri; return; }
+  let best=S.sel, bd=Infinity;
+  for(const ri of mine){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;best=ri;} }
+  // hystérésis : on ne bascule que si la nouvelle barre est nettement plus proche
+  if(best!==S.sel && mine.includes(S.sel)){
+    if(Math.abs(b.x-RODS[S.sel].x)-bd < 45) return;
+  }
+  S.sel=best;
+}
+
 /* ------------------------- suivi barres libres ------------------- */
 function assist(dt){
   if(P.ast<=0) return;
@@ -357,6 +383,7 @@ const DT=1/240; let lastT=performance.now(), acc=0, netAcc=0;
 function loop(now){
   const dr=Math.min(.05,(now-lastT)/1000); lastT=now;
   if(S.phase==='play'){
+    autoSel();
     assist(dr);
     if(NET.mode==='off') ai(dr,now);
     moveRods(dr);
@@ -383,19 +410,32 @@ function loop(now){
   draw(); requestAnimationFrame(loop);
 }
 
-// la balle immobile roule doucement vers la figurine la plus proche,
-// assez lentement pour etre controlee a l'arrivee
+// Balle morte : elle roule doucement vers une figurine, assez lentement pour
+// être contrôlée à l'arrivée.
+// Derrière la barre de défense d'une équipe, elle revient obligatoirement à
+// cette équipe — sinon l'adversaire hérite d'une balle devant un but dégarni
+// alors que le défenseur aurait dû la récupérer. C'est la règle ITSF de la
+// balle morte entre le but et la barre de 2.
+const DZONE=[
+  RODS.find(r=>r.team===0&&r.kind==='D').x,   // en deçà : zone défensive rouge
+  RODS.find(r=>r.team===1&&r.kind==='D').x,   // au-delà : zone défensive bleue
+];
 function revive(){
   const b=S.ball;
+  let own=-1;
+  if(b.x<DZONE[0]) own=0; else if(b.x>DZONE[1]) own=1;
   let bx=0,by=0,bd=Infinity;
-  for(const r of RODS) for(let i=0;i<r.n;i++){
-    const fy=figY(r,i), d=Math.hypot(b.x-r.x,b.y-fy);
-    if(d<bd){ bd=d; bx=r.x; by=fy; }
+  for(const r of RODS){
+    if(own>=0 && r.team!==own) continue;
+    for(let i=0;i<r.n;i++){
+      const fy=figY(r,i), d=Math.hypot(b.x-r.x,b.y-fy);
+      if(d<bd){ bd=d; bx=r.x; by=fy; }
+    }
   }
   const dx=bx-b.x, dy=by-b.y, len=Math.hypot(dx,dy)||1;
   const v=P.trap*0.4;
   b.vx=dx/len*v; b.vy=dy/len*v;
-  S.log.push({t:'revive',m:S.matchN,ms:Date.now()-S.t0});
+  S.log.push({t:'revive',m:S.matchN,zone:own,ms:Date.now()-S.t0});
 }
 
 function goal(t){
@@ -671,14 +711,22 @@ function buildRods(){
     const r=RODS[ri], el=document.createElement('button');
     el.className='rodbtn t'+r.team+(ri===S.sel?' on':'')+((b.trap&&b.trap.ri===ri)?' has':'');
     el.innerHTML='<span class="lab">'+r.kind+'</span>'+KN[r.kind];
-    el.onpointerdown=ev=>{ev.stopPropagation();S.sel=ri;buildRods();};
+    el.onpointerdown=ev=>{ev.stopPropagation();S.auto=false;saveAuto();S.sel=ri;buildRods();};
     host.appendChild(el);
   }
+  const a=document.createElement('button');
+  a.className='autobtn'+(S.auto?' on':'');
+  a.innerHTML='<b>AUTO</b>'+(S.auto?'activé':'manuel');
+  a.onpointerdown=ev=>{ev.stopPropagation();S.auto=!S.auto;saveAuto();buildRods();};
+  host.appendChild(a);
+  resize();          // la gouttière dépend de la largeur réelle de la colonne
 }
+function saveAuto(){ try{localStorage.setItem('bf4_auto',S.auto?'1':'0');}catch(e){} }
+try{ S.auto=localStorage.getItem('bf4_auto')==='1'; }catch(e){}
 let bstate='';
 setInterval(()=>{
   if(S.phase!=='play') return;
-  const b=S.ball, k=S.sel+'|'+(b.trap?b.trap.ri:-1);
+  const b=S.ball, k=S.sel+'|'+(b.trap?b.trap.ri:-1)+'|'+S.auto;
   if(k!==bstate){ bstate=k; buildRods(); }
   if(NET.mode!=='off'&&NET.up&&performance.now()-NET.lastRx>4000){
     NET.up=false; NET.err='Connexion perdue.'; S.phase='menu'; overlay();
@@ -700,7 +748,8 @@ function overlay(){
   if(S.phase==='menu'){
     show('Babyfoot',
      'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
-     '<b>Boutons à gauche</b> pour changer de barre · <b>glisser ↕</b> n\'importe où pour la déplacer · '+
+     '<b>Boutons à gauche</b> pour changer de barre — ou <b>AUTO</b> pour qu\'elle se choisisse seule · '+
+     '<b>glisser ↕</b> n\'importe où pour la déplacer · '+
      '<b>claquer ↔</b> pour frapper.<br>'+
      'Le pied a une <b>portée</b>. Toucher un homme, c\'est lui donner la balle — viser les '+
      '<b>intervalles entre figurines</b> est tout le jeu. '+
