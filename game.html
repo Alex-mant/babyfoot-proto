@@ -2,680 +2,715 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <style>
 :root{
   --paper:#0F1411; --surface:#161D19; --sunk:#1B231E;
   --ink:#E5EAE5; --ink-2:#AEBAB3; --ink-3:#7C8A83;
-  --line:#2A342E; --green:#4FB183;
-  --red:#D65445; --blue:#4E8CC4; --chrome:#8E9A94;
+  --line:#2A342E; --green:#4FB183; --red:#D65445; --blue:#4E8CC4;
   --f-d:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-m:"JetBrains Mono",ui-monospace,Consolas,monospace;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
-body{
-  background:var(--paper); color:var(--ink);
-  font-family:var(--f-d); font-size:15px;
-  display:flex; flex-direction:column;
-  touch-action:none; user-select:none; -webkit-user-select:none;
-}
+html,body{height:100%;margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:#0F1411}
+body{height:100dvh;color:var(--ink);font-family:var(--f-d);font-size:15px;
+  touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 
-/* ---------- top status ---------- */
-#top{
-  flex:0 0 auto; display:flex; align-items:center; gap:.75rem;
-  padding:.35rem .7rem; background:var(--surface); border-bottom:1px solid var(--line);
-}
-.score{font-family:var(--f-m);font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:.4rem}
-.score .r{color:var(--red)} .score .b{color:var(--blue)} .score .sep{color:var(--ink-3)}
-#phase{flex:1;font-size:.72rem;font-weight:600;color:var(--ink-3);text-align:center;line-height:1.2}
-#phase b{display:block;font-size:.88rem;color:var(--ink)}
-.iconbtn{
-  background:none;border:1px solid var(--line);color:var(--ink-3);
-  font-family:var(--f-m);font-size:.7rem;font-weight:600;
-  padding:.35rem .5rem;border-radius:4px;cursor:pointer;
-}
-.iconbtn:active{background:var(--sunk)}
+/* colonne de barres, dans la marge gauche */
+#rods{position:absolute;left:0;top:0;bottom:0;width:62px;z-index:3;
+  display:flex;flex-direction:column;justify-content:center;gap:5px;
+  padding:4px 4px 4px calc(4px + env(safe-area-inset-left))}
+.rodbtn{flex:0 0 auto;font-family:var(--f-m);font-size:.58rem;font-weight:600;
+  border:1px solid var(--line);background:rgba(22,29,25,.86);color:var(--ink-3);
+  border-radius:6px;cursor:pointer;padding:.4rem .1rem;line-height:1.15;
+  display:flex;flex-direction:column;align-items:center;gap:.05rem;backdrop-filter:blur(3px)}
+.rodbtn .lab{font-size:.95rem;font-family:var(--f-d);font-weight:800}
+.rodbtn.t0{color:var(--red)} .rodbtn.t1{color:var(--blue)}
+.rodbtn.on{border-color:currentColor;background:rgba(79,177,131,.14);box-shadow:inset 0 0 0 1px currentColor}
+.rodbtn.has{outline:2px solid #FFE07A;outline-offset:-2px}
 
-/* ---------- canvas ---------- */
-#stage{flex:1 1 auto;position:relative;min-height:0}
-canvas{display:block;width:100%;height:100%}
+#pow{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--green);z-index:4}
+#tuneBtn{position:absolute;right:calc(6px + env(safe-area-inset-right));top:6px;z-index:4;
+  background:rgba(22,29,25,.86);border:1px solid var(--line);color:var(--ink-3);
+  font-family:var(--f-m);font-size:.62rem;font-weight:600;padding:.28rem .45rem;border-radius:4px;cursor:pointer}
 
-/* ---------- overlay ---------- */
-#ov{
-  position:absolute;inset:0;display:none;
-  align-items:center;justify-content:center;
-  background:rgba(15,20,17,.92);padding:1.25rem;text-align:center;
-}
+#ov{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
+  background:rgba(15,20,17,.94);padding:1rem;text-align:center}
 #ov.on{display:flex}
-#ov .box{max-width:30rem}
-#ov h2{font-size:clamp(1.4rem,6vw,2rem);font-weight:800;margin:0 0 .5rem;letter-spacing:-.02em}
-#ov p{color:var(--ink-2);font-size:.9rem;margin:0 0 1.1rem;line-height:1.5}
-#ov .btns{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
-.bigbtn{
-  font-family:var(--f-d);font-weight:600;font-size:1rem;
-  padding:.7rem 1.4rem;border-radius:6px;cursor:pointer;
-  border:1px solid var(--line);background:var(--sunk);color:var(--ink);
-  min-width:9rem;
-}
+#ov .box{max-width:33rem;width:100%}
+#ov h2{font-size:clamp(1.25rem,5vw,1.8rem);font-weight:800;margin:0 0 .4rem;letter-spacing:-.02em}
+#ov p{color:var(--ink-2);font-size:.82rem;margin:0 0 .9rem;line-height:1.55}
+#ov .btns{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.bigbtn{font-family:var(--f-d);font-weight:600;font-size:.9rem;padding:.6rem 1.15rem;border-radius:6px;
+  cursor:pointer;border:1px solid var(--line);background:var(--sunk);color:var(--ink);min-width:7.5rem}
 .bigbtn.pri{background:var(--green);border-color:var(--green);color:#07110C}
 .bigbtn:active{transform:translateY(1px)}
+#code{font-family:var(--f-m);font-size:2.2rem;font-weight:600;letter-spacing:.3em;
+  color:var(--green);margin:.3rem 0 .1rem;text-indent:.3em}
+#codein{font-family:var(--f-m);font-size:1.6rem;font-weight:600;letter-spacing:.25em;text-align:center;
+  text-transform:uppercase;width:8em;padding:.4rem;background:var(--sunk);color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;margin-bottom:.8rem}
 
-/* ---------- controls ---------- */
-#ctl{
-  flex:0 0 auto;display:flex;gap:.45rem;padding:.4rem .5rem calc(.4rem + env(safe-area-inset-bottom));
-  background:var(--surface);border-top:1px solid var(--line);
-  align-items:stretch;
-}
-#rods{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;flex:1 1 58%}
-.rodbtn{
-  font-family:var(--f-m);font-size:.7rem;font-weight:600;letter-spacing:.04em;
-  border:1px solid var(--line);background:var(--sunk);color:var(--ink-3);
-  border-radius:5px;cursor:pointer;padding:.4rem .2rem;line-height:1.25;
-  display:flex;flex-direction:column;align-items:center;gap:.15rem;
-}
-.rodbtn .lab{font-size:.95rem;font-weight:600;font-family:var(--f-d)}
-.rodbtn.on{border-color:currentColor}
-.rodbtn.ball{box-shadow:inset 0 0 0 2px currentColor}
-.rodbtn.t0{color:var(--red)} .rodbtn.t1{color:var(--blue)}
-.rodbtn.on.t0{background:rgba(214,84,69,.16)} .rodbtn.on.t1{background:rgba(78,140,196,.16)}
-.rodbtn:disabled{opacity:.3}
-#pad{
-  flex:1 1 42%;border:1px dashed var(--line);border-radius:5px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
-  font-family:var(--f-m);font-size:.66rem;color:var(--ink-3);line-height:1.4;text-align:center;
-  position:relative;overflow:hidden;
-}
-#pad.hot{border-style:solid;border-color:var(--green);color:var(--ink-2)}
-#pow{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--green)}
-#doneWrap{display:none;flex:0 0 auto;align-items:stretch}
-#doneWrap.on{display:flex}
-
-/* ---------- tuning ---------- */
-#tune{
-  position:absolute;right:.6rem;top:.6rem;z-index:5;width:min(20rem,88vw);
-  background:var(--surface);border:1px solid var(--line);border-radius:6px;
-  padding:.8rem .9rem;display:none;max-height:80%;overflow:auto;
-}
+#tune{position:absolute;right:.5rem;top:2.2rem;z-index:11;width:min(20rem,88vw);background:var(--surface);
+  border:1px solid var(--line);border-radius:6px;padding:.7rem .8rem;display:none;max-height:84%;overflow:auto}
 #tune.on{display:block}
-#tune h3{font-size:.8rem;margin:0 0 .6rem;font-family:var(--f-m);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-.tr{display:grid;grid-template-columns:1fr auto;gap:.2rem .5rem;align-items:center;margin-bottom:.5rem}
-.tr label{font-size:.75rem;color:var(--ink-2)}
-.tr output{font-family:var(--f-m);font-size:.72rem;color:var(--green);font-variant-numeric:tabular-nums}
-.tr input{grid-column:1/-1;width:100%;accent-color:var(--green)}
-#logout{width:100%;font-family:var(--f-m);font-size:.62rem;height:7rem;background:var(--sunk);color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:.4rem;resize:none}
-#rot{
-  position:fixed;inset:0;z-index:20;display:none;
-  align-items:center;justify-content:center;text-align:center;
-  background:var(--paper);padding:2rem;
-}
-#rot b{display:block;font-size:1.35rem;font-weight:800;margin-bottom:.6rem;letter-spacing:-.02em}
-#rot span{font-size:.85rem;color:var(--ink-2);line-height:1.6}
+#tune h3{font-size:.68rem;margin:0 0 .5rem;font-family:var(--f-m);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.tr{display:grid;grid-template-columns:1fr auto;gap:.05rem .4rem;align-items:center;margin-bottom:.4rem}
+.tr label{font-size:.7rem;color:var(--ink-2)}
+.tr output{font-family:var(--f-m);font-size:.68rem;color:var(--green);font-variant-numeric:tabular-nums}
+.tr input{grid-column:1/-1;width:100%;accent-color:var(--green);margin:.05rem 0 0}
+#logout{width:100%;font-family:var(--f-m);font-size:.58rem;height:6rem;background:var(--sunk);
+  color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:.35rem;resize:none}
+
+#rot{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+  text-align:center;background:var(--paper);padding:2rem}
+#rot b{display:block;font-size:1.25rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em}
+#rot span{font-size:.82rem;color:var(--ink-2);line-height:1.6}
 @media (max-aspect-ratio:1/1){ #rot{display:flex} body>*:not(#rot){visibility:hidden} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
-<div id="top">
-  <div class="score"><span class="r" id="s0">0</span><span class="sep">—</span><span class="b" id="s1">0</span></div>
-  <div id="phase"><b>Babyfoot</b>prototype</div>
-  <button class="iconbtn" id="tuneBtn" aria-label="Réglages">RÉG</button>
-</div>
+<canvas id="cv"></canvas>
+<div id="rods"></div>
+<div id="pow"></div>
+<button id="tuneBtn">RÉG</button>
 
-<div id="rot"><div><b>Tourne ton téléphone</b><span>Le geste suppose un écran horizontal :<br>glisser ↕ pour placer, claquer ↔ pour frapper.</span></div></div>
+<div id="ov" class="on"><div class="box">
+  <h2 id="ovT">Babyfoot</h2><p id="ovP"></p><div class="btns" id="ovB"></div>
+</div></div>
 
-<div id="stage">
-  <canvas id="cv"></canvas>
-  <div id="ov" class="on"><div class="box">
-    <h2 id="ovT">Babyfoot</h2>
-    <p id="ovP">Prototype de validation. Deux joueurs, un téléphone. Match en 5 buts.</p>
-    <div class="btns" id="ovB"></div>
-  </div></div>
-  <div id="tune">
-    <h3>Réglages</h3>
-    <div class="tr"><label>Restitution murs</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
-    <div class="tr"><label>Friction tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
-    <div class="tr"><label>Restitution figurine</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.1" max="0.7" step="0.01"></div>
-    <div class="tr"><label>Rayon de capture (×r)</label><output id="o_cap"></output><input type="range" id="i_cap" min="1.1" max="2.4" step="0.05"></div>
-    <div class="tr"><label>Puissance max (mm/s)</label><output id="o_pow"></output><input type="range" id="i_pow" min="2500" max="7000" step="100"></div>
-    <div class="tr"><label>Ouverture du tir</label><output id="o_spr"></output><input type="range" id="i_spr" min="0.2" max="1.3" step="0.02"></div>
-    <div class="tr"><label>Seuil chiquenaude (px)</label><output id="o_trv"></output><input type="range" id="i_trv" min="10" max="70" step="1"></div>
-    <div class="tr"><label>Fenêtre chiquenaude (ms)</label><output id="o_win"></output><input type="range" id="i_win" min="60" max="260" step="10"></div>
-    <div class="tr"><label>Actions max par tour</label><output id="o_act"></output><input type="range" id="i_act" min="1" max="8" step="1"></div>
-    <div class="btns" style="margin:.6rem 0 .5rem"><button class="bigbtn" id="dumpBtn" style="min-width:0;font-size:.8rem;padding:.45rem .8rem">Journal</button><button class="bigbtn" id="resetBtn" style="min-width:0;font-size:.8rem;padding:.45rem .8rem">Défauts</button></div>
-    <textarea id="logout" readonly placeholder="Journal des tirs et des matchs"></textarea>
+<div id="tune">
+  <h3>Réglages</h3>
+  <div class="tr"><label>Seuil de contrôle (mm/s)</label><output id="o_trap"></output><input type="range" id="i_trap" min="200" max="2600" step="25"></div>
+  <div class="tr"><label>Report de la barre sur la balle</label><output id="o_carry"></output><input type="range" id="i_carry" min="0" max="1.4" step="0.02"></div>
+  <div class="tr"><label>Portée du pied (mm)</label><output id="o_reach"></output><input type="range" id="i_reach" min="28" max="95" step="1"></div>
+  <div class="tr"><label>Restitution murs</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
+  <div class="tr"><label>Friction tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
+  <div class="tr"><label>Restitution figurine</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.1" max="0.8" step="0.01"></div>
+  <div class="tr"><label>Puissance max (mm/s)</label><output id="o_pow"></output><input type="range" id="i_pow" min="2500" max="8000" step="100"></div>
+  <div class="tr"><label>Ouverture du tir</label><output id="o_spr"></output><input type="range" id="i_spr" min="0.2" max="1.3" step="0.02"></div>
+  <div class="tr"><label>Arrondi des angles (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="12" step="0.5"></div>
+  <div class="tr"><label>Roulement sous le pied</label><output id="o_roll"></output><input type="range" id="i_roll" min="0" max="0.9" step="0.02"></div>
+  <div class="tr"><label>Vitesse barre (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
+  <div class="tr"><label>Suivi barres non tenues</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
+  <div class="tr"><label>Niveau de l'IA (solo)</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.15" max="1" step="0.05"></div>
+  <div class="tr"><label>Seuil chiquenaude (px)</label><output id="o_trv"></output><input type="range" id="i_trv" min="10" max="70" step="1"></div>
+  <div class="tr"><label>Fenêtre chiquenaude (ms)</label><output id="o_win"></output><input type="range" id="i_win" min="60" max="260" step="10"></div>
+  <div class="btns" style="margin:.5rem 0 .4rem">
+    <button class="bigbtn" id="dumpBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Journal</button>
+    <button class="bigbtn" id="resetBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Défauts</button>
+    <button class="bigbtn" id="menuBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Menu</button>
   </div>
+  <textarea id="logout" readonly placeholder="Journal"></textarea>
 </div>
 
-<div id="ctl">
-  <div id="rods"></div>
-  <div id="pad">glisser ↕ placer<br>claquer ↔ frapper<div id="pow"></div></div>
-  <div id="doneWrap"><button class="bigbtn pri" id="doneBtn" style="min-width:6.5rem">Prêt</button></div>
-</div>
+<div id="rot"><div><b>Tourne ton téléphone</b><span>Le geste suppose un écran horizontal :<br>glisser ↕ pour déplacer, claquer ↔ pour frapper.</span></div></div>
 
 <script>
 "use strict";
 /* ==================================================================
-   BABYFOOT — prototype de validation au tour par possession
-   Une seule question : est-ce qu'on redemande un deuxième match ?
+   BABYFOOT — temps réel, 1v1 en ligne, plein écran
+   Portée du pied · contrôle selon la vitesse relative · report de la
+   vitesse de barre sur la balle (tir tiré)
    ================================================================== */
 
-/* ----------------------------- monde ----------------------------- */
-const W = 1200, H = 680;              // terrain en mm (Bonzini B90)
-const GY0 = 240, GY1 = 440;           // ouverture des buts
-const BR  = 17.5;                     // rayon balle (35 mm)
-const FR  = 21;                       // rayon figurine
-
-// team 0 = ROUGE : but à gauche (x=0), attaque vers la droite
-// team 1 = BLEU  : but à droite (x=W), attaque vers la gauche
-const RODS = [
-  { x:  75, team:0, n:1, sp:  0, span:110, kind:'G' },
-  { x: 225, team:0, n:2, sp:230, span:115, kind:'D' },
-  { x: 375, team:1, n:3, sp:185, span: 92, kind:'A' },
-  { x: 525, team:1, n:5, sp:120, span: 60, kind:'M' },
-  { x: 675, team:0, n:5, sp:120, span: 60, kind:'M' },
-  { x: 825, team:1, n:2, sp:230, span:115, kind:'D' },
-  { x: 975, team:0, n:3, sp:185, span: 92, kind:'A' },
-  { x:1125, team:1, n:1, sp:  0, span:110, kind:'G' },
+const W=1200,H=680,GY0=240,GY1=440,BR=17.5,FR=21;
+const HX=13, HY=22;   // demi-dimensions du pied : mince dans l'axe de jeu, large en travers
+const RODS=[
+  {x:  75,team:0,n:1,sp:  0,span:110,kind:'G'},
+  {x: 225,team:0,n:2,sp:230,span:115,kind:'D'},
+  {x: 375,team:1,n:3,sp:185,span: 92,kind:'A'},
+  {x: 525,team:1,n:5,sp:120,span: 60,kind:'M'},
+  {x: 675,team:0,n:5,sp:120,span: 60,kind:'M'},
+  {x: 825,team:1,n:2,sp:230,span:115,kind:'D'},
+  {x: 975,team:0,n:3,sp:185,span: 92,kind:'A'},
+  {x:1125,team:1,n:1,sp:  0,span:110,kind:'G'},
 ];
-const KINDNAME = { G:'Gardien', D:'Défense', M:'Demis', A:'Attaque' };
+const KN={G:'gardien',D:'défense',M:'demis',A:'attaque'};
+const DIR=t=>t===0?1:-1;
+const T0=[0,1,4,6], T1=[2,3,5,7];          // barres par équipe, ordre croissant en x
+const MYRODS=t=>t===0?T0:T1;
 
-const DEFAULTS = {
-  wall: 0.70,     // restitution des bandes  — LE réglage critique
-  fric: 0.80,     // friction du tapis (/s)
-  figr: 0.35,     // restitution figurine
-  cap : 1.55,     // rayon de capture (× rayon balle)
-  pow : 4200,     // impulsion max (mm/s)
-  spr : 0.75,     // ouverture angulaire du tir
-  trv : 25,       // course mini de la chiquenaude (px)
-  win : 120,      // fenêtre maxi de la chiquenaude (ms)
-  act : 4,        // actions max par tour
+const DEF={
+  trap:1150, carry:0.85, reach:58,
+  wall:0.70, fric:0.80, figr:0.42,
+  pow:4600, spr:0.78, roll:0.30, slew:1900, crn:6,
+  ast:0.35, ai:0.55, trv:25, win:120,
 };
-let P = Object.assign({}, DEFAULTS);
-try { const st = localStorage.getItem('bf_tune'); if (st) P = Object.assign(P, JSON.parse(st)); } catch(e){}
+let P=Object.assign({},DEF);
+try{const t=localStorage.getItem('bf3_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
+const KICK_MS=130, HOLD_MAX=15000, WIN_SCORE=5;
 
-/* ----------------------------- état ----------------------------- */
-const S = {
-  phase : 'menu',      // menu | defend | handoff | aim | sim | goal | end
-  ball  : { x:W/2, y:H/2, vx:0, vy:0 },
-  score : [0,0],
-  holder: 0,           // équipe en possession
-  rodIdx: -1,          // barre possédant la balle (-1 = balle libre)
-  sel   : -1,          // barre sélectionnée
-  acts  : 0,           // actions consommées dans le tour
-  shotFromAttack:false,
-  trail : [],
-  simT  : 0,
-  flash : 0,
-  matchN: 0,           // n° de match dans la chaîne de revanches
-  chain : 0,           // revanches consécutives
-  t0    : 0,           // début du match (pour temps au 1er but)
-  firstGoalMs: null,
-  log   : [],
+const S={
+  phase:'menu', score:[0,0], me:0, sel:-1,
+  ball:{x:W/2,y:H/2,vx:0,vy:0,trap:null},
+  holdT:0, flash:0, trail:[], serveTo:1, last:-1,
+  matchN:0, chain:0, t0:0, firstGoalMs:null, log:[],
 };
-RODS.forEach(r => r.off = 0);
+const NET={mode:'off', peer:null, conn:null, code:'', up:false, lastRx:0, err:''};
+RODS.forEach(r=>{r.off=0;r.tgt=0;r.vy=0;r.kick=null;r.aiT=0;r.aiT2=0;});
 
-/* ----------------------------- canvas ---------------------------- */
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-let VIEW = { s:1, ox:0, oy:0 };
+const isHost=()=>NET.mode==='host'||NET.mode==='off';
+const FLIP=()=>S.me===1;
 
+/* ------------------------------ vue ------------------------------ */
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+let V={s:1,ox:0,oy:0};
+const GUT=64, TOPH=34;
 function resize(){
-  const st = document.getElementById('stage');
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  const w = st.clientWidth, h = st.clientHeight;
-  cv.width = Math.max(1, Math.round(w*dpr));
-  cv.height = Math.max(1, Math.round(h*dpr));
+  const dpr=Math.min(devicePixelRatio||1,2.5);
+  const w=innerWidth, h=innerHeight;
+  cv.width=Math.max(1,Math.round(w*dpr)); cv.height=Math.max(1,Math.round(h*dpr));
+  cv.style.width=w+'px'; cv.style.height=h+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const pad = 6;
-  const s = Math.min((w-pad*2)/W, (h-pad*2)/H);
-  VIEW.s = s;
-  VIEW.ox = (w - W*s)/2;
-  VIEW.oy = (h - H*s)/2;
+  const aw=w-GUT-10, ah=h-TOPH-8;
+  const s=Math.min(aw/W,ah/H);
+  V.s=s; V.ox=GUT+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
 }
-const SX = x => VIEW.ox + x*VIEW.s;
-const SY = y => VIEW.oy + y*VIEW.s;
-window.addEventListener('resize', () => { resize(); draw(); });
+const SX=x=>V.ox+(FLIP()?(W-x):x)*V.s;
+const SY=y=>V.oy+(FLIP()?(H-y):y)*V.s;
+addEventListener('resize',resize);
 
-/* --------------------------- géométrie --------------------------- */
-function figY(r,i){ return H/2 + (i-(r.n-1)/2)*r.sp + r.off; }
-function rodsOf(t){ const a=[]; RODS.forEach((r,i)=>{ if(r.team===t) a.push(i); }); return a; }
-function capR(){ return BR * P.cap; }
-
-/* --------------------------- physique ---------------------------- */
-function stepSub(dt){
-  const b = S.ball;
-  b.x += b.vx*dt; b.y += b.vy*dt;
-
-  // bandes hautes/basses
-  if (b.y < BR){ b.y = BR; b.vy = -b.vy*P.wall; }
-  if (b.y > H-BR){ b.y = H-BR; b.vy = -b.vy*P.wall; }
-
-  // fonds : but ou rebond
-  if (b.x < BR){
-    if (b.y > GY0 && b.y < GY1) return 'goal1';   // encaissé par ROUGE
-    b.x = BR; b.vx = -b.vx*P.wall;
+/* --------------------------- barres ------------------------------ */
+function moveRods(dt){
+  const b=S.ball;
+  for(let ri=0;ri<RODS.length;ri++){
+    const r=RODS[ri];
+    r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt));
+    const d=r.tgt-r.off;
+    const step=Math.sign(d)*Math.min(Math.abs(d),P.slew*dt);
+    if(step!==0&&dt>0){
+      r.off+=step; r.vy=step/dt;
+      if(b.trap&&b.trap.ri===ri) b.trap.off-=step*P.roll;   // la balle roule sous le pied
+    } else r.vy=0;
+    r.off=Math.max(-r.span,Math.min(r.span,r.off));
   }
-  if (b.x > W-BR){
-    if (b.y > GY0 && b.y < GY1) return 'goal0';   // encaissé par BLEU
-    b.x = W-BR; b.vx = -b.vx*P.wall;
-  }
-
-  // figurines
-  for (let ri=0; ri<RODS.length; ri++){
-    const r = RODS[ri];
-    if (Math.abs(b.x - r.x) > FR+BR) continue;
-    for (let i=0;i<r.n;i++){
-      const fy = figY(r,i);
-      let dx = b.x - r.x, dy = b.y - fy;
-      const d2 = dx*dx + dy*dy, rr = FR+BR;
-      if (d2 >= rr*rr || d2 === 0) continue;
-      const d = Math.sqrt(d2), nx = dx/d, ny = dy/d;
-      b.x = r.x + nx*rr; b.y = fy + ny*rr;
-      const vn = b.vx*nx + b.vy*ny;
-      if (vn < 0){ b.vx -= (1+P.figr)*vn*nx; b.vy -= (1+P.figr)*vn*ny; }
-    }
-  }
-  // friction
-  const k = Math.exp(-P.fric*dt);
-  b.vx *= k; b.vy *= k;
-  return null;
-}
-
-function stepPhysics(dt){
-  const b = S.ball;
-  const sp = Math.hypot(b.vx,b.vy);
-  const n = Math.max(1, Math.min(24, Math.ceil(sp*dt/(BR*0.5))));
-  const h = dt/n;
-  for (let i=0;i<n;i++){ const g = stepSub(h); if (g) return g; }
-  return null;
-}
-
-// quelle barre capture la balle, si elle est assez lente ?
-function findCapture(){
-  const b = S.ball;
-  if (Math.hypot(b.vx,b.vy) > 620) return -1;
-  let best=-1, bd=Infinity;
-  for (let ri=0; ri<RODS.length; ri++){
-    const r = RODS[ri];
-    if (Math.abs(b.x - r.x) > capR()+FR) continue;
-    for (let i=0;i<r.n;i++){
-      const d = Math.hypot(b.x-r.x, b.y-figY(r,i));
-      if (d < capR()+FR && d < bd){ bd = d; best = ri; }
-    }
-  }
-  return best;
-}
-function nearestRod(){
-  let best=0, bd=Infinity;
-  for (let ri=0; ri<RODS.length; ri++){
-    const r = RODS[ri];
-    for (let i=0;i<r.n;i++){
-      const d = Math.hypot(S.ball.x-r.x, S.ball.y-figY(r,i));
-      if (d<bd){ bd=d; best=ri; }
-    }
-  }
-  return best;
 }
 
 /* ------------------------------ tir ------------------------------ */
-// dirX : +1 chiquenaude vers la droite, -1 vers la gauche (repère écran)
-function shoot(dirX, power01, suspect){
-  const ri = S.rodIdx; if (ri < 0) return;
-  const r = RODS[ri], b = S.ball;
-  // figurine la plus proche de la balle sur cette barre
-  let fi=0, bd=Infinity;
-  for (let i=0;i<r.n;i++){ const d=Math.abs(b.y-figY(r,i)); if(d<bd){bd=d;fi=i;} }
-  const fy = figY(r,fi);
-  const dy = b.y - fy;                                   // décalage figurine / balle
-  const uy = Math.max(-1, Math.min(1, dy/(FR+BR))) * P.spr;
-  let ux = dirX, len = Math.hypot(ux,uy);
-  ux/=len; const uyn = uy/len;
-  const v = P.pow * (0.28 + 0.72*power01);
-  b.vx = ux*v; b.vy = uyn*v;
-  b.x = r.x + ux*(FR+BR+1); b.y = fy + uyn*(FR+BR+1);
+function fireKick(ri,dir,pow){ const r=RODS[ri]; if(!r.kick) r.kick={dir,pow,t:KICK_MS/1000,applied:false}; }
 
-  S.acts++;
-  S.shotFromAttack = (r.kind === 'A' && Math.sign(dirX) === (r.team===0 ? 1 : -1));
-  S.log.push({ t:'shot', m:S.matchN, team:S.holder, rod:r.kind, dir:dirX,
-               pow:+power01.toFixed(2), off:+dy.toFixed(1), suspect:!!suspect, ms:Date.now()-S.t0 });
-  S.rodIdx = -1; S.trail.length = 0; S.simT = 0;
-  setPhase('sim');
-}
-
-/* --------------------------- séquence ---------------------------- */
-function setPhase(p){
-  S.phase = p;
-  const ph = document.getElementById('phase');
-  const dw = document.getElementById('doneWrap');
-  const pad = document.getElementById('pad');
-  if (p==='defend'){
-    const d = S.holder^1;
-    const g = RODS.findIndex(r=>r.team===d && r.kind==='G');
-    if (S.sel<0 || RODS[S.sel].team!==d || !(RODS[S.sel].kind==='G'||RODS[S.sel].kind==='D')) S.sel = g;
-  }
-  dw.classList.toggle('on', p==='defend');
-  pad.classList.toggle('hot', p==='aim');
-  const name = t => t===0 ? 'ROUGE' : 'BLEU';
-  if (p==='defend')      ph.innerHTML = '<b>'+name(S.holder^1)+' — place ta défense</b>glisse gardien et défense, puis Prêt';
-  else if (p==='handoff')ph.innerHTML = '<b>Passe le téléphone à '+name(S.holder)+'</b>touche l\'écran quand tu l\'as';
-  else if (p==='aim')    ph.innerHTML = '<b>'+name(S.holder)+' — à toi</b>action '+(S.acts+1)+' / '+P.act;
-  else if (p==='sim')    ph.innerHTML = '<b>…</b>';
-  else if (p==='goal')   ph.innerHTML = '<b>BUT</b>';
-  buildRods();
-  overlay();
-}
-
-function newMatch(keepChain){
-  S.score=[0,0]; S.acts=0; S.trail.length=0;
-  S.matchN++; S.firstGoalMs=null; S.t0=Date.now();
-  if (!keepChain) S.chain = 0;
-  RODS.forEach(r=>r.off=0);
-  updScore();
-  serve(Math.random()<0.5?0:1, true);
-}
-
-function serve(team, first){
-  const mid = RODS.findIndex(r=>r.team===team && r.kind==='M');
-  const r = RODS[mid];
-  S.holder = team; S.rodIdx = mid; S.sel = mid; S.acts = 0;
-  S.ball.x = r.x + (team===0?1:-1)*(FR+BR+2);
-  S.ball.y = figY(r, (r.n-1)/2|0);
-  S.ball.vx = S.ball.vy = 0;
-  S.trail.length = 0;
-  setPhase(first ? 'handoff' : 'defend');
-}
-
-function resolveSim(res){
-  if (res==='goal0' || res==='goal1'){
-    const sc = res==='goal0' ? 0 : 1;
-    S.score[sc]++; updScore();
-    if (S.firstGoalMs===null){ S.firstGoalMs = Date.now()-S.t0;
-      S.log.push({t:'firstgoal', m:S.matchN, ms:S.firstGoalMs}); }
-    S.log.push({t:'goal', m:S.matchN, team:sc, ms:Date.now()-S.t0});
-    S.flash = 1;
-    if (S.score[sc] >= 5){ setPhase('end'); return; }
-    setTimeout(()=>serve(sc^1,false), 900);
-    setPhase('goal'); return;
-  }
-  let ri = findCapture();
-  if (ri < 0) ri = nearestRod();
-  const t = RODS[ri].team;
-  const keep = (t === S.holder) && !S.shotFromAttack && S.acts < P.act;
-  S.rodIdx = ri; S.sel = ri;
-  if (keep){ setPhase('aim'); }
-  else {
-    S.log.push({t:'turnover', m:S.matchN, from:S.holder, acts:S.acts,
-                reason:S.shotFromAttack?'shot':(t!==S.holder?'intercept':'maxacts')});
-    S.holder = t !== S.holder ? t : (S.holder^1);
-    S.rodIdx = RODS[ri].team === S.holder ? ri : -1;
-    if (S.rodIdx < 0){ // balle chez l'autre camp après tir raté : donne-la à la barre la plus proche du camp
-      const cand = rodsOf(S.holder).map(i=>({i,d:Math.abs(RODS[i].x-S.ball.x)})).sort((a,b)=>a.d-b.d)[0];
-      S.rodIdx = cand.i; S.sel = cand.i;
-      const r = RODS[cand.i];
-      S.ball.x = r.x + (S.holder===0?1:-1)*(FR+BR+2);
-      let fi=0,bd=Infinity;
-      for(let k=0;k<r.n;k++){const d=Math.abs(S.ball.y-figY(r,k)); if(d<bd){bd=d;fi=k;}}
-      S.ball.y = figY(r,fi);
+function applyKicks(){
+  const b=S.ball;
+  for(let ri=0;ri<RODS.length;ri++){
+    const r=RODS[ri]; if(!r.kick||r.kick.applied) continue;
+    if(b.trap&&b.trap.ri===ri){
+      launch(r,b.trap.off,r.kick.dir,r.kick.pow,figY(r,b.trap.fi));
+      r.kick.applied=true; hit(r,true); continue;
     }
-    S.ball.vx = S.ball.vy = 0;
-    S.acts = 0; S.shotFromAttack = false;
-    setPhase('defend');
+    if(b.trap) continue;                                   // tenue ailleurs : intouchable
+    if(Math.abs(b.x-r.x)>P.reach) continue;                // PORTÉE
+    let fi=-1,bd=Infinity;
+    for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd){bd=d;fi=i;}}
+    if(bd>P.reach) continue;
+    launch(r,b.y-figY(r,fi),r.kick.dir,r.kick.pow,figY(r,fi));
+    r.kick.applied=true; hit(r,true);
+  }
+}
+const figY=(r,i)=>H/2+(i-(r.n-1)/2)*r.sp+r.off;
+
+// zone plate -> tout droit ; au-dela, l'angle ouvre progressivement
+function devi(dy){
+  const flat=Math.max(1,HY-P.crn), lim=HY+BR;
+  const a=Math.abs(dy);
+  if(a<=flat) return 0;
+  return Math.sign(dy)*Math.min(1,(a-flat)/Math.max(1,lim-flat))*P.spr;
+}
+function launch(r,dy,dir,pow01,fy){
+  const b=S.ball;
+  const uy=devi(dy);
+  const len=Math.hypot(dir,uy), ux=dir/len, uyn=uy/len;
+  const v=P.pow*(0.26+0.74*pow01);
+  b.trap=null;
+  b.vx=ux*v;
+  // la balle hérite de la vitesse latérale de la barre : c'est le tir tiré
+  b.vy=uyn*v + r.vy*P.carry;
+  b.y=Math.max(BR,Math.min(H-BR,fy+dy));
+  b.x=r.x+ux*(HX+BR+1.5);
+  S.last=r.team;
+}
+function hit(r,h){ S.log.push({t:'kick',m:S.matchN,team:r.team,rod:r.kind,hit:h,ms:Date.now()-S.t0}); }
+
+/* ---------------------------- physique --------------------------- */
+function stepSub(dt){
+  const b=S.ball;
+  if(b.trap){
+    const r=RODS[b.trap.ri];
+    b.trap.off=Math.max(-(HY+BR-2),Math.min(HY+BR-2,b.trap.off));
+    b.y=Math.max(BR,Math.min(H-BR,figY(r,b.trap.fi)+b.trap.off));
+    b.x=r.x+b.trap.side*(HX+BR-3);
+    b.vx=0; b.vy=r.vy*(1-P.roll);
+    return null;
+  }
+  b.x+=b.vx*dt; b.y+=b.vy*dt;
+  if(b.y<BR){b.y=BR;b.vy=-b.vy*P.wall;}
+  if(b.y>H-BR){b.y=H-BR;b.vy=-b.vy*P.wall;}
+  if(b.x<BR){ if(b.y>GY0&&b.y<GY1) return 'g1'; b.x=BR;b.vx=-b.vx*P.wall; }
+  if(b.x>W-BR){ if(b.y>GY0&&b.y<GY1) return 'g0'; b.x=W-BR;b.vx=-b.vx*P.wall; }
+
+  for(let ri=0;ri<RODS.length;ri++){
+    const r=RODS[ri];
+    if(Math.abs(b.x-r.x)>HX+BR) continue;
+    for(let i=0;i<r.n;i++){
+      const fy=figY(r,i), dx=b.x-r.x, dy=b.y-fy;
+      // point le plus proche sur le rectangle a angles arrondis
+      const cr=Math.min(P.crn,HX-0.5,HY-0.5), rr=cr+BR;
+      const ix=Math.max(-(HX-cr),Math.min(HX-cr,dx));
+      const iy=Math.max(-(HY-cr),Math.min(HY-cr,dy));
+      let ox=dx-ix, oy=dy-iy, d=Math.hypot(ox,oy);
+      if(d>=rr) continue;
+      if(d<1e-6){ ox=Math.sign(dx)||1; oy=0; d=1; }
+      const nx=ox/d, ny=oy/d;
+      b.x=r.x+ix+nx*rr; b.y=fy+iy+ny*rr;
+
+      // figurine = corps cinématique : on travaille en vitesse RELATIVE
+      const vfy=r.vy*P.carry;
+      let rvx=b.vx, rvy=b.vy-vfy;
+      const sp=Math.hypot(rvx,rvy);
+
+      if(sp<P.trap && !r.kick){                      // CONTRÔLE
+        b.trap={ri,fi:i,off:Math.max(-(HY+BR-2),Math.min(HY+BR-2,dy)),side:Math.sign(dx)||1};
+        b.vx=0; b.vy=vfy; S.holdT=0;
+        S.log.push({t:'trap',m:S.matchN,team:r.team,rod:r.kind,from:S.last,sp:Math.round(sp),ms:Date.now()-S.t0});
+        S.last=r.team; return null;
+      }
+      const vn=rvx*nx+rvy*ny;                        // sinon rebond, puis réinjection
+      if(vn<0){ rvx-=(1+P.figr)*vn*nx; rvy-=(1+P.figr)*vn*ny; }
+      b.vx=rvx; b.vy=rvy+vfy;
+      S.last=r.team;
+    }
+  }
+  const k=Math.exp(-P.fric*dt);
+  b.vx*=k; b.vy*=k;
+  return null;
+}
+function stepPhysics(dt){
+  const b=S.ball, sp=Math.hypot(b.vx,b.vy);
+  const n=Math.max(1,Math.min(28,Math.ceil(sp*dt/(BR*0.5))));
+  for(let i=0;i<n;i++){ const g=stepSub(dt/n); if(g) return g; }
+  return null;
+}
+
+/* -------------------------------- IA ----------------------------- */
+function ai(dt,now){
+  const foe=S.me^1, b=S.ball;
+  for(const ri of MYRODS(foe)){
+    const r=RODS[ri];
+    if(now-r.aiT>260-160*P.ai){
+      r.aiT=now;
+      let ty=b.y;
+      if(Math.abs(b.vx)>60){ const tt=Math.max(0,Math.min(.5,(r.x-b.x)/b.vx)); ty=b.y+b.vy*tt; }
+      ty=Math.max(0,Math.min(H,ty));
+      let fi=0,bd=Infinity;
+      for(let i=0;i<r.n;i++){const d=Math.abs(ty-figY(r,i)); if(d<bd){bd=d;fi=i;}}
+      r.aiT2=Math.max(-r.span,Math.min(r.span,r.off+(ty-figY(r,fi))));
+    }
+    const d=r.aiT2-r.off;
+    r.tgt=r.off+Math.sign(d)*Math.min(Math.abs(d),P.slew*P.ai*dt);
+    if(!r.kick){
+      let near=Infinity;
+      for(let i=0;i<r.n;i++) near=Math.min(near,Math.abs(b.y-figY(r,i)));
+      const reach=(b.trap&&b.trap.ri===ri)||(!b.trap&&Math.abs(b.x-r.x)<P.reach*.85&&near<P.reach*.85);
+      if(reach){ const pw=r.kind==='A'?.92:r.kind==='M'?.5:.85; fireKick(ri,DIR(foe),pw*(.55+.45*P.ai)); }
+    }
+  }
+}
+
+/* ------------------------- suivi barres libres ------------------- */
+function assist(dt){
+  if(P.ast<=0) return;
+  const b=S.ball;
+  for(const ri of MYRODS(S.me)){
+    if(ri===S.sel) continue;
+    const r=RODS[ri];
+    let fi=0,bd=Infinity;
+    for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd){bd=d;fi=i;}}
+    const want=Math.max(-r.span,Math.min(r.span,r.off+(b.y-figY(r,fi))));
+    r.tgt+=(want-r.tgt)*Math.min(1,4*P.ast*dt);
   }
 }
 
 /* ------------------------------ boucle --------------------------- */
-let last = performance.now(), accum = 0;
-const DT = 1/240;
+const DT=1/240; let lastT=performance.now(), acc=0, netAcc=0;
 function loop(now){
-  const dtReal = Math.min(0.05, (now-last)/1000); last = now;
-  if (S.phase === 'sim'){
-    accum += dtReal; S.simT += dtReal;
-    let res = null;
-    while (accum >= DT && !res){ res = stepPhysics(DT); accum -= DT; }
-    S.trail.push(S.ball.x, S.ball.y);
-    if (S.trail.length > 340) S.trail.splice(0,2);
-    if (!res){
-      const slow = Math.hypot(S.ball.vx,S.ball.vy) < 140;
-      if ((slow && findCapture()>=0) || S.simT > 6.5) resolveSim(null);
-    } else resolveSim(res);
-  } else { accum = 0; }
-  if (S.flash > 0) S.flash = Math.max(0, S.flash - dtReal*1.4);
-  draw();
-  requestAnimationFrame(loop);
+  const dr=Math.min(.05,(now-lastT)/1000); lastT=now;
+  if(S.phase==='play'){
+    assist(dr);
+    if(NET.mode==='off') ai(dr,now);
+    moveRods(dr);
+    for(const r of RODS){ if(r.kick){ r.kick.t-=dr; if(r.kick.t<=0) r.kick=null; } }
+    acc+=dr; let res=null;
+    while(acc>=DT&&!res){ if(isHost()) applyKicks(); res=stepPhysics(DT); acc-=DT; }
+    if(!S.ball.trap){ S.trail.push(S.ball.x,S.ball.y); if(S.trail.length>260) S.trail.splice(0,2); }
+    else if(isHost()){ S.holdT+=dr*1000; if(S.holdT>HOLD_MAX){ fireKick(S.ball.trap.ri,DIR(RODS[S.ball.trap.ri].team),.35); S.holdT=0; } }
+    if(res&&isHost()) goal(res==='g0'?0:1);
+    netAcc+=dr; if(netAcc>=1/60){ netAcc=0; netTick(); }
+  } else acc=0;
+  if(S.flash>0) S.flash=Math.max(0,S.flash-dr*1.5);
+  draw(); requestAnimationFrame(loop);
+}
+
+function goal(t){
+  S.score[t]++; S.flash=1;
+  if(S.firstGoalMs===null){S.firstGoalMs=Date.now()-S.t0;S.log.push({t:'firstgoal',m:S.matchN,ms:S.firstGoalMs});}
+  S.log.push({t:'goal',m:S.matchN,team:t,ms:Date.now()-S.t0});
+  if(S.score[t]>=WIN_SCORE){ S.phase='end'; overlay(); send({p:'end',sc:S.score}); return; }
+  S.phase='pause'; setTimeout(()=>serve(t^1),800);
+}
+function serve(team){
+  const mid=RODS.findIndex(r=>r.team===team&&r.kind==='M'), r=RODS[mid];
+  RODS.forEach(q=>q.kick=null);
+  S.ball.trap={ri:mid,fi:(r.n-1)>>1,off:0,side:DIR(team)};
+  S.ball.vx=S.ball.vy=0; S.holdT=0; S.trail.length=0; S.last=team;
+  if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
+  S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on');
+}
+function newMatch(keep){
+  S.score=[0,0]; S.matchN++; S.firstGoalMs=null; S.t0=Date.now();
+  if(!keep) S.chain=0;
+  RODS.forEach(r=>{r.off=0;r.tgt=0;r.kick=null;});
+  S.serveTo^=1; serve(S.serveTo);
+}
+
+/* ------------------------------ réseau --------------------------- */
+function send(o){ if(NET.conn&&NET.up){ try{NET.conn.send(o);}catch(e){} } }
+function netTick(){
+  if(NET.mode==='off'||!NET.up) return;
+  const b=S.ball;
+  if(NET.mode==='host'){
+    send({s:1, b:[Math.round(b.x*4)/4,Math.round(b.y*4)/4,Math.round(b.vx),Math.round(b.vy)],
+          tr:b.trap?[b.trap.ri,b.trap.fi,Math.round(b.trap.off*4)/4,b.trap.side]:0,
+          r:RODS.map(r=>Math.round(r.off*4)/4), sc:S.score, p:S.phase});
+  } else {
+    send({i:1, t:MYRODS(1).map(ri=>Math.round(RODS[ri].tgt*4)/4)});
+  }
+}
+function onMsg(d){
+  NET.lastRx=performance.now();
+  if(d.s){                                   // état venu de l'hôte
+    const b=S.ball;
+    b.x=d.b[0]; b.y=d.b[1]; b.vx=d.b[2]; b.vy=d.b[3];
+    b.trap=d.tr?{ri:d.tr[0],fi:d.tr[1],off:d.tr[2],side:d.tr[3]}:null;
+    for(let i=0;i<8;i++){ const r=RODS[i];
+      if(r.team===S.me) continue;            // mes barres restent prédites en local
+      r.off=d.r[i]; r.tgt=d.r[i];
+    }
+    S.score=d.sc;
+    if(d.p!==S.phase){
+      S.phase=d.p;
+      if(d.p==='play'){ if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
+        document.getElementById('ov').classList.remove('on'); buildRods(); }
+      else overlay();
+    }
+  } else if(d.i){                            // entrées venues de l'invité
+    MYRODS(1).forEach((ri,k)=>{ RODS[ri].tgt=d.t[k]; });
+  } else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2]); }
+  else if(d.rm){ if(NET.mode==='host'){ S.chain++; newMatch(true); } }
+  else if(d.p==='end'){ S.phase='end'; S.score=d.sc||S.score; overlay(); }
+}
+function wire(c){
+  NET.conn=c;
+  c.on('open',()=>{ NET.up=true; NET.lastRx=performance.now();
+    if(NET.mode==='host'){ S.me=0; newMatch(false); } else { S.me=1; S.phase='wait'; overlay(); } });
+  c.on('data',onMsg);
+  c.on('close',()=>{ NET.up=false; NET.err='Connexion fermée.'; S.phase='menu'; overlay(); });
+  c.on('error',()=>{ NET.up=false; NET.err='Erreur de connexion.'; S.phase='menu'; overlay(); });
+}
+const ALPH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const mkCode=()=>Array.from({length:4},()=>ALPH[Math.floor(Math.random()*ALPH.length)]).join('');
+function netFail(m){ NET.err=m; NET.mode='off'; if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.peer=null; S.phase='menu'; overlay(); }
+
+function doHost(){
+  if(typeof Peer==='undefined') return netFail("La bibliothèque réseau n'a pas pu être chargée.");
+  NET.mode='host'; NET.code=mkCode(); NET.err='';
+  S.phase='hosting'; overlay();
+  NET.peer=new Peer('bf3-'+NET.code,{debug:0});
+  NET.peer.on('open',()=>{ S.phase='hosting'; overlay(); });
+  NET.peer.on('connection',c=>wire(c));
+  NET.peer.on('error',e=>{
+    if(e&&e.type==='unavailable-id'){ try{NET.peer.destroy();}catch(x){} return doHost(); }
+    netFail("Réseau indisponible ici. Utilise l'APK ou la page GitHub Pages, pas l'aperçu web.");
+  });
+}
+function doJoin(code){
+  if(typeof Peer==='undefined') return netFail("La bibliothèque réseau n'a pas pu être chargée.");
+  NET.mode='guest'; NET.err=''; S.phase='joining'; overlay();
+  NET.peer=new Peer({debug:0});
+  NET.peer.on('open',()=>{ wire(NET.peer.connect('bf3-'+code,{reliable:true})); });
+  NET.peer.on('error',e=>{
+    netFail(e&&e.type==='peer-unavailable' ? 'Aucune partie avec ce code.'
+      : "Réseau indisponible ici. Utilise l'APK ou la page GitHub Pages, pas l'aperçu web.");
+  });
 }
 
 /* ------------------------------ rendu ---------------------------- */
+function beads(w){
+  const s=V.s, y=TOPH/2+2, r=6.5, gap=17;
+  for(let t=0;t<2;t++){
+    const col=t===0?'#D65445':'#4E8CC4';
+    const x0=t===0 ? V.ox+8 : V.ox+W*s-8-gap*(WIN_SCORE-1);
+    const shown=FLIP()?(t^1):t;                      // la traverse suit la vue
+    const val=S.score[t];
+    for(let i=0;i<WIN_SCORE;i++){
+      const cx=(FLIP()? (V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i) : x0+gap*i);
+      const px=t===0 ? (FLIP()? V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i : V.ox+8+gap*i)
+                     : (FLIP()? V.ox+8+gap*i : V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i);
+      ctx.beginPath(); ctx.arc(px,y,r,0,7);
+      if(i<val){ ctx.fillStyle=col; ctx.fill(); }
+      else { ctx.strokeStyle='rgba(142,154,148,.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
+      if(t===S.me&&i===0){ ctx.fillStyle=col; ctx.font='600 9px '+'"JetBrains Mono",monospace';
+        ctx.textAlign='left'; ctx.fillText('TOI',px-r,y+r+10); }
+    }
+  }
+}
+function rrect(x,y,w,h,r){
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(x,y,w,h,r);
+  else{ ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+        ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+}
+// direction du tir seulement — aucun rebond n'est calculé ni montre
+function aimLine(){
+  if(S.phase!=='play'||S.sel<0) return;
+  const r=RODS[S.sel], b=S.ball;
+  if(!r||r.team!==S.me) return;
+  let dy;
+  if(b.trap){ if(b.trap.ri!==S.sel) return; dy=b.trap.off; }
+  else{
+    if(Math.abs(b.x-r.x)>P.reach) return;
+    let bd=Infinity;
+    for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd)bd=d;}
+    if(bd>P.reach) return;
+    dy=b.y-figY(r,(()=>{let fi=0,m=Infinity;for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i));if(d<m){m=d;fi=i;}}return fi;})());
+  }
+  const dir=DIR(S.me), uy=devi(dy), len=Math.hypot(dir,uy);
+  const ux=dir/len, uyn=uy/len, L=145;
+  const s=V.s;
+  ctx.save();
+  ctx.setLineDash([7,6]); ctx.lineWidth=2;
+  ctx.strokeStyle='rgba(255,224,122,.5)';
+  ctx.beginPath();
+  ctx.moveTo(SX(b.x),SY(b.y));
+  ctx.lineTo(SX(b.x+ux*L),SY(b.y+uyn*L));
+  ctx.stroke(); ctx.restore();
+}
 function draw(){
-  const w = cv.clientWidth, h = cv.clientHeight;
-  ctx.clearRect(0,0,w,h);
-  ctx.fillStyle = '#0F1411'; ctx.fillRect(0,0,w,h);
-  const s = VIEW.s;
-
-  // tapis
-  ctx.fillStyle = '#1B4B37';
-  ctx.fillRect(SX(0),SY(0),W*s,H*s);
-  ctx.strokeStyle = 'rgba(255,255,255,.20)'; ctx.lineWidth = Math.max(1,1.2*s*10);
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(SX(0),SY(0),W*s,H*s);
+  const w=innerWidth,h=innerHeight,s=V.s;
+  ctx.fillStyle='#0F1411'; ctx.fillRect(0,0,w,h);
+  // caisse
+  ctx.fillStyle='#12211A';
+  ctx.fillRect(V.ox-9,V.oy-9,W*s+18,H*s+18);
+  ctx.fillStyle='#1B4B37'; ctx.fillRect(V.ox,V.oy,W*s,H*s);
+  ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.lineWidth=1.4;
+  ctx.strokeRect(V.ox,V.oy,W*s,H*s);
   ctx.beginPath(); ctx.moveTo(SX(W/2),SY(0)); ctx.lineTo(SX(W/2),SY(H)); ctx.stroke();
   ctx.beginPath(); ctx.arc(SX(W/2),SY(H/2),90*s,0,7); ctx.stroke();
+  ctx.fillStyle='#D65445'; ctx.fillRect(SX(FLIP()?W:0)-(FLIP()?0:15),SY(FLIP()?GY1:GY0),15,(GY1-GY0)*s);
+  ctx.fillStyle='#4E8CC4'; ctx.fillRect(SX(FLIP()?0:W)-(FLIP()?15:0),SY(FLIP()?GY1:GY0),15,(GY1-GY0)*s);
 
-  // buts
-  ctx.fillStyle = '#D65445'; ctx.fillRect(SX(-16),SY(GY0),16*s,(GY1-GY0)*s);
-  ctx.fillStyle = '#4E8CC4'; ctx.fillRect(SX(W),SY(GY0),16*s,(GY1-GY0)*s);
-
-  // traînée
-  if (S.trail.length > 4){
-    ctx.lineCap = 'round';
-    for (let i=2;i<S.trail.length;i+=2){
-      const a = i/S.trail.length;
-      ctx.strokeStyle = 'rgba(255,236,160,'+(a*0.55).toFixed(3)+')';
-      ctx.lineWidth = Math.max(1, a*4);
-      ctx.beginPath();
-      ctx.moveTo(SX(S.trail[i-2]),SY(S.trail[i-1]));
-      ctx.lineTo(SX(S.trail[i]),SY(S.trail[i+1]));
-      ctx.stroke();
+  if(S.trail.length>4){
+    ctx.lineCap='round';
+    for(let i=2;i<S.trail.length;i+=2){
+      const a=i/S.trail.length;
+      ctx.strokeStyle='rgba(255,236,160,'+(a*.5).toFixed(3)+')';
+      ctx.lineWidth=Math.max(1,a*3.5);
+      ctx.beginPath(); ctx.moveTo(SX(S.trail[i-2]),SY(S.trail[i-1]));
+      ctx.lineTo(SX(S.trail[i]),SY(S.trail[i+1])); ctx.stroke();
     }
   }
-
-  // barres + figurines
-  const canMove = (S.phase==='aim') ? S.holder : (S.phase==='defend' ? (S.holder^1) : -1);
-  for (let ri=0; ri<RODS.length; ri++){
-    const r = RODS[ri];
-    const mine = r.team === canMove;
-    const editable = mine && (S.phase==='aim' || (S.phase==='defend' && (r.kind==='G'||r.kind==='D')));
-    ctx.strokeStyle = editable ? '#C9D4CE' : 'rgba(142,154,148,.55)';
-    ctx.lineWidth = editable ? 3 : 2;
-    ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-18)); ctx.lineTo(SX(r.x),SY(H+18)); ctx.stroke();
-
-    for (let i=0;i<r.n;i++){
-      const fy = figY(r,i);
-      ctx.beginPath(); ctx.arc(SX(r.x),SY(fy),FR*s,0,7);
-      ctx.fillStyle = r.team===0 ? '#D65445' : '#4E8CC4';
-      ctx.globalAlpha = editable ? 1 : 0.78;
-      ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1.5; ctx.stroke();
-    }
-    if (ri === S.sel && editable){
-      ctx.strokeStyle = '#4FB183'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-18)); ctx.lineTo(SX(r.x),SY(H+18)); ctx.stroke();
-    }
-    if (ri === S.rodIdx && S.phase==='aim'){
-      ctx.strokeStyle = '#FFE07A'; ctx.lineWidth = 2;
-      ctx.setLineDash([6,5]);
-      ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-18)); ctx.lineTo(SX(r.x),SY(H+18)); ctx.stroke();
-      ctx.setLineDash([]);
+  for(let ri=0;ri<RODS.length;ri++){
+    const r=RODS[ri], mine=r.team===S.me, act=ri===S.sel;
+    ctx.strokeStyle=act?'#4FB183':(mine?'#B9C6BF':'rgba(142,154,148,.45)');
+    ctx.lineWidth=act?3:(mine?2.2:1.7);
+    ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-20)); ctx.lineTo(SX(r.x),SY(H+20)); ctx.stroke();
+    for(let i=0;i<r.n;i++){
+      const fy=figY(r,i);
+      rrect(SX(r.x)-HX*s,SY(fy)-HY*s,HX*2*s,HY*2*s,Math.min(P.crn,HX-.5)*s);
+      ctx.fillStyle=r.team===0?'#D65445':'#4E8CC4';
+      ctx.globalAlpha=mine?1:.8; ctx.fill(); ctx.globalAlpha=1;
+      ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1.4; ctx.stroke();
+      if(r.kick){
+        ctx.strokeStyle='rgba(255,224,122,.9)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(SX(r.x),SY(fy));
+        ctx.lineTo(SX(r.x+r.kick.dir*P.reach),SY(fy)); ctx.stroke();
+      }
     }
   }
-
-  // balle
-  ctx.beginPath(); ctx.arc(SX(S.ball.x),SY(S.ball.y),BR*s,0,7);
-  ctx.fillStyle = '#F5E9C8'; ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.stroke();
-
-  if (S.flash > 0){
-    ctx.fillStyle = 'rgba(255,255,255,'+(S.flash*0.30).toFixed(3)+')';
-    ctx.fillRect(0,0,w,h);
-  }
+  const b=S.ball;
+  aimLine();
+  ctx.beginPath(); ctx.arc(SX(b.x),SY(b.y),BR*s,0,7);
+  ctx.fillStyle=b.trap?'#FFE07A':'#F5E9C8'; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke();
+  beads(w);
+  if(S.flash>0){ ctx.fillStyle='rgba(255,255,255,'+(S.flash*.3).toFixed(3)+')'; ctx.fillRect(0,0,w,h); }
 }
 
-/* ------------------------- gestes tactiles ----------------------- */
-const pad = document.getElementById('pad');
-const powBar = document.getElementById('pow');
-let G = null;   // geste courant
+/* ------------------------------ gestes --------------------------- */
+const powBar=document.getElementById('pow');
+let G=null;
+const guard=t=>!!(t.closest&&(t.closest('#rods')||t.closest('#tune')||t.closest('#ov')||t.closest('#tuneBtn')));
 
-function ptr(e){ const t = e.touches ? e.touches[0] : e; return { x:t.clientX, y:t.clientY }; }
-
-function onDown(e){
-  if (S.phase==='handoff'){ setPhase('aim'); e.preventDefault(); return; }
-  if (S.phase!=='aim' && S.phase!=='defend') return;
-  if (e.target.closest('#rods') || e.target.closest('#tune') || e.target.closest('#doneWrap')) return;
-  const p = ptr(e);
-  G = { x0:p.x, y0:p.y, px:p.x, py:p.y, t0:performance.now(),
-        pts:[{x:p.x,y:p.y,t:performance.now()}], kind:null, vtravel:0, fired:false, lastVertT:0 };
+addEventListener('pointerdown',e=>{
+  if(guard(e.target)||S.phase!=='play') return;
+  G={id:e.pointerId,px:e.clientX,py:e.clientY,
+     pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],kind:null,vtr:0,lastV:0};
   e.preventDefault();
-}
-function onMove(e){
-  if (!G) return;
-  const p = ptr(e), now = performance.now();
-  const dx = p.x-G.px, dy = p.y-G.py;
-  G.pts.push({x:p.x,y:p.y,t:now});
-  while (G.pts.length>2 && now-G.pts[0].t > 220) G.pts.shift();
+},{passive:false});
 
-  // classement sur la fenetre recente : permet de claquer sans lever le doigt
-  const w0 = G.pts.find(q => now-q.t <= P.win) || G.pts[0];
-  const tdx = Math.abs(p.x-w0.x), tdy = Math.abs(p.y-w0.y);
+addEventListener('pointermove',e=>{
+  if(!G||e.pointerId!==G.id) return;
+  const now=performance.now(),x=e.clientX,y=e.clientY,dy=y-G.py;
+  G.pts.push({x,y,t:now});
+  while(G.pts.length>2&&now-G.pts[0].t>240) G.pts.shift();
+  const w0=G.pts.find(q=>now-q.t<=P.win)||G.pts[0];
+  const tdx=Math.abs(x-w0.x), tdy=Math.abs(y-w0.y);
 
-  // --- classement : glissement si vertical dominant, chiquenaude si horizontal rapide
-  if (G.kind !== 'flick'){
-    if (tdy >= tdx){ G.kind = 'slide'; }
-    else if (tdx > tdy*1.25 && tdx > P.trv){
-      // vitesse horizontale sur la fenêtre
-      const dt = Math.max(16, now-w0.t);
-      const vx = (p.x-w0.x)/dt*1000;   // px/s
-      if (Math.abs(vx) > 260 && (now-G.t0) < P.win*2.4){
-        G.kind = 'flick';
-        const power = Math.max(0, Math.min(1, (Math.abs(vx)-260)/2200));
-        const suspect = (G.vtravel > 40) && (now - G.lastVertT < 160);
-        if (S.phase==='aim' && !G.fired){
-          G.fired = true;
-          powBar.style.width = (power*100).toFixed(0)+'%';
-          setTimeout(()=>{ powBar.style.width='0%'; }, 400);
-          shoot(Math.sign(p.x-w0.x)||1, power, suspect);
+  if(G.kind!=='flick'){
+    if(tdy>=tdx) G.kind='slide';
+    else if(tdx>tdy*1.25&&tdx>P.trv){
+      const dt=Math.max(16,now-w0.t), vx=(x-w0.x)/dt*1000;
+      if(Math.abs(vx)>260){
+        const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/2300));
+        const susp=(G.vtr>40)&&(now-G.lastV<160);
+        if(S.sel>=0){
+          const dir=(Math.sign(x-w0.x)||1)*(FLIP()?-1:1);
+          if(isHost()) fireKick(S.sel,dir,pw); else { fireKick(S.sel,dir,pw); send({k:[S.sel,dir,pw]}); }
+          S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),suspect:susp,ms:Date.now()-S.t0});
+          powBar.style.width=(pw*100).toFixed(0)+'%';
+          setTimeout(()=>powBar.style.width='0%',350);
         }
-        G = null; e.preventDefault(); return;
+        G=null; e.preventDefault(); return;
       }
     }
   }
-
-  if (G.kind === 'slide' && Math.abs(dy) > 0){
-    G.vtravel += Math.abs(dy); G.lastVertT = now;
-    const ri = S.sel;
-    if (ri>=0){
-      const r = RODS[ri];
-      const okTeam = (S.phase==='aim') ? r.team===S.holder
-                   : (r.team===(S.holder^1) && (r.kind==='G'||r.kind==='D'));
-      if (okTeam){
-        r.off = Math.max(-r.span, Math.min(r.span, r.off + dy/Math.max(0.001,VIEW.s)));
-      }
+  if(G.kind==='slide'&&dy!==0){
+    G.vtr+=Math.abs(dy); G.lastV=now;
+    const r=RODS[S.sel];
+    if(r&&r.team===S.me){
+      const d=(dy/Math.max(.001,V.s))*(FLIP()?-1:1);
+      r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt+d));
     }
   }
-  G.px = p.x; G.py = p.y;
-  e.preventDefault();
-}
-function onUp(e){ G = null; }
+  G.px=x; G.py=y; e.preventDefault();
+},{passive:false});
+['pointerup','pointercancel'].forEach(ev=>addEventListener(ev,e=>{ if(G&&e.pointerId===G.id) G=null; },{passive:false}));
 
-['mousedown','touchstart'].forEach(ev=>document.addEventListener(ev,onDown,{passive:false}));
-['mousemove','touchmove'].forEach(ev=>document.addEventListener(ev,onMove,{passive:false}));
-['mouseup','touchend','touchcancel'].forEach(ev=>document.addEventListener(ev,onUp,{passive:false}));
-
-/* --------------------------- boutons barre ----------------------- */
+/* ------------------------------ UI ------------------------------- */
 function buildRods(){
-  const host = document.getElementById('rods');
-  host.innerHTML = '';
-  let team = -1, allow = () => true;
-  if (S.phase === 'aim'){ team = S.holder; }
-  else if (S.phase === 'defend'){ team = S.holder^1; allow = r => r.kind==='G'||r.kind==='D'; }
-  if (team < 0){ host.innerHTML = ''; return; }
-  // ordre spatial : de gauche à droite comme sur le terrain
-  rodsOf(team).forEach(ri=>{
-    const r = RODS[ri];
-    const b = document.createElement('button');
-    b.className = 'rodbtn t'+r.team + (ri===S.sel?' on':'') + (ri===S.rodIdx&&S.phase==='aim'?' ball':'');
-    b.innerHTML = '<span class="lab">'+r.kind+'</span>'+KINDNAME[r.kind].toLowerCase();
-    b.disabled = !allow(r);
-    b.onclick = () => { if(!b.disabled){ S.sel = ri; buildRods(); } };
-    host.appendChild(b);
-  });
+  const host=document.getElementById('rods'); host.innerHTML='';
+  if(S.phase!=='play'){ return; }
+  const list=MYRODS(S.me).slice(); if(FLIP()) list.reverse();
+  const b=S.ball;
+  for(const ri of list){
+    const r=RODS[ri], el=document.createElement('button');
+    el.className='rodbtn t'+r.team+(ri===S.sel?' on':'')+((b.trap&&b.trap.ri===ri)?' has':'');
+    el.innerHTML='<span class="lab">'+r.kind+'</span>'+KN[r.kind];
+    el.onpointerdown=ev=>{ev.stopPropagation();S.sel=ri;buildRods();};
+    host.appendChild(el);
+  }
 }
+let bstate='';
+setInterval(()=>{
+  if(S.phase!=='play') return;
+  const b=S.ball, k=S.sel+'|'+(b.trap?b.trap.ri:-1);
+  if(k!==bstate){ bstate=k; buildRods(); }
+  if(NET.mode!=='off'&&NET.up&&performance.now()-NET.lastRx>4000){
+    NET.up=false; NET.err='Connexion perdue.'; S.phase='menu'; overlay();
+  }
+},120);
 
-document.getElementById('doneBtn').onclick = () => {
-  if (S.phase==='defend'){ S.sel = S.rodIdx; setPhase('handoff'); }
-};
-
-/* ----------------------------- overlay --------------------------- */
+function fs(){ const e=document.documentElement;
+  if(e.requestFullscreen) e.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+  if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
+}
 function overlay(){
-  const ov=document.getElementById('ov'), T=document.getElementById('ovT'),
-        Pp=document.getElementById('ovP'), B=document.getElementById('ovB');
-  const show=(t,p,btns)=>{
-    T.textContent=t; Pp.innerHTML=p; B.innerHTML='';
-    btns.forEach(([lab,fn,pri])=>{
-      const b=document.createElement('button');
-      b.className='bigbtn'+(pri?' pri':''); b.textContent=lab; b.onclick=fn; B.appendChild(b);
-    });
-    ov.classList.add('on');
-  };
-  if (S.phase==='menu'){
+  const ov=document.getElementById('ov'),T=document.getElementById('ovT'),
+        Pp=document.getElementById('ovP'),B=document.getElementById('ovB');
+  const show=(t,p,btns)=>{ T.textContent=t; Pp.innerHTML=p; B.innerHTML='';
+    (btns||[]).forEach(([l,f,pri])=>{const b=document.createElement('button');
+      b.className='bigbtn'+(pri?' pri':'');b.textContent=l;b.onclick=f;B.appendChild(b);});
+    ov.classList.add('on'); buildRods(); };
+  const err=NET.err?'<br><br><b style="color:#D65445">'+NET.err+'</b>':'';
+  if(S.phase==='menu'){
     show('Babyfoot',
-      'Prototype de validation. Deux joueurs, un téléphone, match en 5 buts.<br><br>'+
-      '<b>Glisse ↕</b> pour placer la barre · <b>claque ↔</b> pour frapper — vers la droite ou vers la gauche. '+
-      'La vitesse du geste donne la puissance. Aucune ligne de visée : l\'angle sort du décalage entre la figurine et la balle.',
-      [['Commencer',()=>{ newMatch(false); },true]]);
-  } else if (S.phase==='end'){
-    const win = S.score[0]>S.score[1] ? 'ROUGE' : 'BLEU';
-    S.log.push({t:'matchend', m:S.matchN, score:S.score.slice(), chain:S.chain,
-                firstGoalMs:S.firstGoalMs, ms:Date.now()-S.t0});
-    saveLog();
-    show(win+' gagne',
-      S.score[0]+' — '+S.score[1] + (S.firstGoalMs!==null ? '<br>premier but à '+(S.firstGoalMs/1000).toFixed(0)+' s' : ''),
-      [['Revanche',()=>{ S.chain++; S.log.push({t:'rematch',chain:S.chain}); saveLog(); newMatch(true); }],
-       ['Arrêter', ()=>{ S.log.push({t:'stop',chain:S.chain}); saveLog(); S.phase='menu'; overlay(); }]]);
+     'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
+     '<b>Boutons à gauche</b> pour changer de barre · <b>glisser ↕</b> n\'importe où pour la déplacer · '+
+     '<b>claquer ↔</b> pour frapper.<br>'+
+     'Le pied a une <b>portée</b>. Une balle lente est contrôlée, une balle rapide rebondit. '+
+     'La balle <b>hérite du mouvement de ta barre</b> : coulisser puis claquer, c\'est le tir tiré.<br>'+
+     'Le pied est <b>plat au centre</b> — il renvoie droit — et <b>ouvre aux angles</b>. Le trait pointillé montre '+
+     'la direction du tir, jamais les rebonds.'+err,
+     [['Solo',()=>{fs();NET.mode='off';S.me=0;newMatch(false);},true],
+      ['Créer une partie',()=>{fs();doHost();}],
+      ['Rejoindre',()=>{fs();S.phase='code';overlay();}]]);
+  } else if(S.phase==='code'){
+    T.textContent='Rejoindre'; B.innerHTML='';
+    Pp.innerHTML='Entre le code affiché sur l\'autre téléphone.<br><input id="codein" maxlength="4" autocapitalize="characters" autocomplete="off">';
+    const b=document.createElement('button'); b.className='bigbtn pri'; b.textContent='Connexion';
+    b.onclick=()=>{const v=(document.getElementById('codein').value||'').toUpperCase().trim(); if(v.length===4) doJoin(v);};
+    const c=document.createElement('button'); c.className='bigbtn'; c.textContent='Retour';
+    c.onclick=()=>{S.phase='menu';overlay();};
+    B.appendChild(b); B.appendChild(c); ov.classList.add('on');
+    setTimeout(()=>{const i=document.getElementById('codein'); if(i) i.focus();},60);
+  } else if(S.phase==='hosting'){
+    show('Ton code','Fais entrer ce code sur l\'autre téléphone.<div id="code">'+NET.code+'</div>'+
+      'Les deux appareils doivent être sur un réseau qui autorise le pair-à-pair — le même Wi-Fi marche toujours.',
+      [['Annuler',()=>{try{NET.peer.destroy();}catch(e){} NET.mode='off';S.phase='menu';overlay();}]]);
+  } else if(S.phase==='joining'){ show('Connexion…','Recherche de la partie.',[]); }
+  else if(S.phase==='wait'){ show('Connecté','En attente du coup d\'envoi.',[]); }
+  else if(S.phase==='end'){
+    const win=S.score[0]>S.score[1]?'ROUGE':'BLEU';
+    const mine=(S.score[0]>S.score[1]?0:1)===S.me;
+    S.log.push({t:'matchend',m:S.matchN,score:S.score.slice(),chain:S.chain,firstGoalMs:S.firstGoalMs,ms:Date.now()-S.t0});
+    save();
+    show((mine?'Tu gagnes':win+' gagne'), S.score[0]+' — '+S.score[1]+
+      (S.firstGoalMs!==null?'<br>premier but à '+(S.firstGoalMs/1000).toFixed(0)+' s':''),
+     [['Revanche',()=>{S.chain++;S.log.push({t:'rematch',chain:S.chain});save();
+        if(isHost()) newMatch(true); else { send({rm:1}); show('Revanche','Demandée. En attente de l\'hôte.',[]); }}],
+      ['Arrêter',()=>{S.log.push({t:'stop',chain:S.chain});save();
+        if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;S.phase='menu';overlay();}]]);
   } else ov.classList.remove('on');
 }
-function updScore(){
-  document.getElementById('s0').textContent=S.score[0];
-  document.getElementById('s1').textContent=S.score[1];
-}
 
-/* ----------------------------- journal --------------------------- */
-function saveLog(){ try{ localStorage.setItem('bf_log', JSON.stringify(S.log.slice(-500))); }catch(e){} }
-document.getElementById('dumpBtn').onclick = ()=>{
-  const shots = S.log.filter(e=>e.t==='shot');
-  const susp  = shots.filter(e=>e.suspect).length;
-  const rem   = S.log.filter(e=>e.t==='rematch').length;
-  const tos   = S.log.filter(e=>e.t==='turnover');
-  const chainAvg = tos.length ? (tos.reduce((a,b)=>a+b.acts,0)/tos.length).toFixed(2) : '—';
-  const fg    = S.log.filter(e=>e.t==='firstgoal').map(e=>(e.ms/1000).toFixed(0)+'s').join(' ');
-  document.getElementById('logout').value =
-    'tirs '+shots.length+'  |  suspects '+susp+' ('+(shots.length?(100*susp/shots.length).toFixed(1):0)+'%)\n'+
-    'revanches '+rem+'  |  chaine passes moy '+chainAvg+'\n'+
-    '1er but: '+(fg||'—')+'\n\n'+JSON.stringify(S.log.slice(-40));
+/* ---------------------------- journal ---------------------------- */
+function save(){ try{localStorage.setItem('bf3_log',JSON.stringify(S.log.slice(-600)));}catch(e){} }
+document.getElementById('dumpBtn').onclick=()=>{
+  const f=S.log.filter(e=>e.t==='flick'), k=S.log.filter(e=>e.t==='kick'&&e.team===S.me);
+  const miss=Math.max(0,f.length-k.length);
+  const traps=S.log.filter(e=>e.t==='trap'&&e.team===S.me);
+  const pass=traps.filter(e=>e.from===S.me).length;
+  const susp=f.filter(e=>e.suspect).length;
+  const rem=S.log.filter(e=>e.t==='rematch').length;
+  const fg=S.log.filter(e=>e.t==='firstgoal').map(e=>(e.ms/1000).toFixed(0)+'s').join(' ');
+  document.getElementById('logout').value=
+    'chiquenaudes '+f.length+'  |  dans le vide '+miss+' ('+(f.length?(100*miss/f.length).toFixed(0):0)+'%)\n'+
+    'accidentelles '+susp+' ('+(f.length?(100*susp/f.length).toFixed(1):0)+'%)\n'+
+    'contrôles '+traps.length+'  dont passes réussies '+pass+'\n'+
+    'revanches '+rem+'  |  1er but: '+(fg||'—')+'\n\n'+JSON.stringify(S.log.slice(-25));
 };
 
-/* ----------------------------- réglages -------------------------- */
-const KEYS=['wall','fric','figr','cap','pow','spr','trv','win','act'];
+/* ---------------------------- réglages --------------------------- */
+const KEYS=['trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','slew','ast','ai','trv','win'];
+const INT={trap:1,reach:1,pow:1,slew:1,trv:1,win:1};
 function syncTune(){
   KEYS.forEach(k=>{
-    const i=document.getElementById('i_'+k), o=document.getElementById('o_'+k);
-    i.value=P[k]; o.textContent = (k==='pow'||k==='trv'||k==='win'||k==='act') ? P[k] : (+P[k]).toFixed(2);
-    i.oninput=()=>{ P[k]=+i.value; o.textContent=(k==='pow'||k==='trv'||k==='win'||k==='act')?P[k]:(+P[k]).toFixed(2);
-      try{localStorage.setItem('bf_tune',JSON.stringify(P));}catch(e){} };
+    const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
+    i.value=P[k]; o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
+    i.oninput=()=>{P[k]=+i.value;o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
+      try{localStorage.setItem('bf3_tune',JSON.stringify(P));}catch(e){}};
   });
 }
 document.getElementById('tuneBtn').onclick=()=>document.getElementById('tune').classList.toggle('on');
-document.getElementById('resetBtn').onclick=()=>{ P=Object.assign({},DEFAULTS); syncTune();
-  try{localStorage.setItem('bf_tune',JSON.stringify(P));}catch(e){} };
+document.getElementById('resetBtn').onclick=()=>{P=Object.assign({},DEF);syncTune();
+  try{localStorage.setItem('bf3_tune',JSON.stringify(P));}catch(e){}};
+document.getElementById('menuBtn').onclick=()=>{
+  document.getElementById('tune').classList.remove('on');
+  if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;
+  S.phase='menu'; overlay();
+};
 
-/* ------------------------------ démarrage ------------------------ */
-syncTune(); resize(); setPhase('menu'); buildRods(); updScore();
+syncTune(); resize(); overlay();
 requestAnimationFrame(loop);
 </script>

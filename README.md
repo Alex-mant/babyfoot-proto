@@ -11,43 +11,68 @@ d'entreprise, direction artistique) est délibérément hors périmètre.
 
 ## Tester
 
-- **Web, sans rien installer** — ouvre la page publiée sur ton téléphone, en paysage.
-- **APK Android** — onglet *Releases* → `babyfoot-proto.apk`. Reconstruit
-  automatiquement à chaque push sur `main` par GitHub Actions.
+**En 1v1, chacun son téléphone** — les deux ouvrent la page GitHub Pages, en
+paysage. L'un fait *Créer une partie* et lit son code à quatre lettres, l'autre
+fait *Rejoindre* et le saisit. Le même Wi-Fi marche toujours ; sur des réseaux
+différents la traversée de NAT échoue parfois (pas de serveur TURN).
 
-Deux joueurs, un seul téléphone. Match en 5 buts.
+    https://alex-mant.github.io/babyfoot-proto/
+
+**APK Android** — onglet *Releases* → `babyfoot-proto.apk`. Reconstruit à chaque
+push sur `main`. Le mode en ligne y fonctionne aussi.
+
+**Solo contre l'IA** — disponible partout, y compris dans l'aperçu web publié
+par Claude. Attention : cet aperçu bloque toute connexion réseau sortante, donc
+**le 1v1 en ligne n'y fonctionne pas**. Utilise GitHub Pages ou l'APK.
+
+Match en 5 buts.
 
 ## Les contrôles
 
 | Geste | Effet |
 |---|---|
-| Boutons de barre (bas gauche) | sélectionner la barre — rangés dans leur ordre spatial sur le terrain |
-| **Glisser ↕** | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
+| Boutons de barre (colonne de gauche) | sélectionner la barre — rangés dans leur ordre spatial sur le terrain |
+| **Glisser ↕** n'importe où | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
 | **Claquer ↔** | frapper — vers la droite ou vers la gauche, en repère écran |
 | Vitesse du claquement | puissance du tir |
 
-**On ne vise pas, on se place.** Il n'y a aucune ligne de visée et aucune
-prévisualisation de rebond : l'angle du tir sort du décalage entre la figurine et
-la balle. Frapper décentré envoie en biais. Une prévisualisation offrirait
-gratuitement au débutant ce que l'expert met vingt matchs à intérioriser — ce qui
-est disqualifiant pour un jeu dont la prémisse est la compétition.
+Le jeu est en **temps réel**. Chaque joueur voit la table depuis son propre côté :
+la vue de l'invité est pivotée de 180°, donc les gestes restent absolus pour
+chacun.
 
-L'apprentissage se fait donc **après** le tir, pas avant : la balle laisse une
-traînée qui rend les bandes lisibles.
+## Les quatre mécaniques
 
-## Le tour
+**La portée.** Le pied ne touche la balle que si elle est réellement à sa portée.
+Claquer plus loin tape dans le vide. C'est ce qui empêche un gardien de frapper
+une balle à l'autre bout de la table.
 
-Un tour est **une possession, pas un tir**. On garde la main tant qu'on garde la
-balle ; on la perd sur interception, au bout de 4 actions, ou dès qu'on tire
-depuis la barre d'attaque.
+**Le contrôle selon la vitesse.** Au contact, si la vitesse *relative* balle/barre
+est sous le seuil, la figurine bloque la balle. Au-dessus, elle rebondit. C'est
+tout le dosage des passes : une passe forte arrive vite mais ne se contrôle pas,
+une passe douce se contrôle mais s'intercepte. Et l'endroit où le coéquipier
+bloque la balle détermine l'angle dont il disposera ensuite.
 
-À chaque changement de possession, celui qui vient de perdre la balle **place sa
-défense** avant de passer le téléphone.
+**Le report de la barre sur la balle.** La figurine est un corps cinématique :
+une barre qui coulisse pousse la balle, et au moment du tir la balle **hérite de
+la vitesse latérale de la barre**. Coulisser puis claquer pendant le mouvement,
+c'est le tir tiré — le timing du claquement dans le glissement est une compétence
+à part entière.
 
-> Limite connue du hotseat : sur un seul écran, le placement défensif ne peut pas
-> être simultané et caché comme le prévoit la spec. Il est ici posé à l'aveugle
-> avant que l'attaquant ne joue. La version cachée n'a de sens qu'en jeu
-> asynchrone en ligne.
+**Le pied plat à angles arrondis.** Un disque dévie toujours le long du rayon,
+donc rien n'est jamais franchement droit. Le rectangle à angles arrondis donne
+une face plate qui renvoie droit et des angles qui ouvrent les diagonales. Le
+rayon d'arrondi est réglable : petit = très binaire, grand = retour vers le disque.
+
+## Prévisualisation
+
+Un trait pointillé montre la **direction** du tir, et rien d'autre. Aucun rebond
+n'est calculé ni affiché : une prévisualisation de trajectoire offrirait
+gratuitement au débutant ce que l'expert met vingt matchs à intérioriser, ce qui
+est disqualifiant pour un jeu dont la prémisse est la compétition. La direction,
+elle, est de la géométrie au présent, pas une prédiction — et elle enseigne la
+forme du pied.
+
+L'apprentissage des bandes se fait **après** le tir : la balle laisse une traînée.
 
 ## Mesurer
 
