@@ -112,7 +112,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   <div class="tr"><label>Arrondi des angles (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="12" step="0.5"></div>
   <div class="tr"><label>Roulement sous le pied</label><output id="o_roll"></output><input type="range" id="i_roll" min="0" max="0.9" step="0.02"></div>
   <div class="tr"><label>Vitesse barre (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
-  <div class="tr"><label>Vitesse de bascule roulé/porté</label><output id="o_rollv"></output><input type="range" id="i_rollv" min="120" max="1600" step="20"></div>
+  <div class="tr"><label>Vitesse pour puissance max (px/s)</label><output id="o_pwv"></output><input type="range" id="i_pwv" min="600" max="5000" step="50"></div>
   <div class="tr"><label>Délai balle morte (s)</label><output id="o_stall"></output><input type="range" id="i_stall" min="0.8" max="6" step="0.1"></div>
   <div class="tr"><label>Suivi auto des barres libres — 0 = aucun</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
   <div class="tr"><label>Niveau de l'IA (solo)</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.15" max="1" step="0.05"></div>
@@ -159,8 +159,8 @@ const MYRODS=t=>t===0?T0:T1;
 const DEF={
   ctrl:1, trap:1150, carry:0.60, reach:58,
   wall:0.70, fric:0.95, figr:0.42,
-  pow:2400, spr:0.78, roll:0.30, slew:1500, crn:6,
-  ast:0, ai:0.55, trv:25, win:120, stall:2.5, rollv:520,
+  pow:2400, spr:0.78, roll:0, slew:1500, crn:6,
+  ast:0, ai:0.55, trv:25, win:120, stall:2.5, pwv:2600,
 };
 let P=Object.assign({},DEF);
 try{const t=localStorage.getItem('bf4_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
@@ -208,26 +208,25 @@ function moveRods(dt){
     const step=Math.sign(d)*Math.min(Math.abs(d),P.slew*dt);
     if(step!==0&&dt>0){
       r.off+=step; r.vy=step/dt;
-      if(b.trap&&b.trap.ri===ri){
-        // glissement lent : le pied coulisse sous la balle, on choisit sa zone de contact.
-        // glissement rapide : la balle est emportee, on se deplace sur le terrain.
-        const f=Math.max(0,Math.min(1,1-Math.abs(r.vy)/Math.max(1,P.rollv)));
-        b.trap.off-=step*(P.roll+(0.96-P.roll)*f);
-      }
+      // balle tenue : collée par défaut. Le glissement sert à se placer en
+      // travers du terrain, jamais à régler l'angle — celui-ci se choisit
+      // dans la chiquenaude.
+      if(b.trap&&b.trap.ri===ri&&P.roll>0) b.trap.off-=step*P.roll;
     } else r.vy=0;
     r.off=Math.max(-r.span,Math.min(r.span,r.off));
   }
 }
 
 /* ------------------------------ tir ------------------------------ */
-function fireKick(ri,dir,pow){ const r=RODS[ri]; if(!r.kick) r.kick={dir,pow,t:KICK_MS/1000,applied:false}; }
+function fireKick(ri,dir,pow,z){ const r=RODS[ri]; if(!r.kick) r.kick={dir,pow,z:z|0,t:KICK_MS/1000,applied:false}; }
 
 function applyKicks(){
   const b=S.ball;
   for(let ri=0;ri<RODS.length;ri++){
     const r=RODS[ri]; if(!r.kick||r.kick.applied) continue;
     if(b.trap&&b.trap.ri===ri){
-      launch(r,b.trap.off,r.kick.dir,r.kick.pow,figY(r,b.trap.fi));
+      // balle tenue : l'angle vient de la zone choisie, pas d'un décalage subi
+      launch(r,zoneDy(r.kick.z),r.kick.dir,r.kick.pow,figY(r,b.trap.fi));
       r.kick.applied=true; hit(r,true); continue;
     }
     if(b.trap) continue;                                   // tenue ailleurs : intouchable
@@ -252,6 +251,13 @@ function devi(dy){
   const a=Math.abs(dy);
   if(a<=flat) return 0;
   return Math.sign(dy)*Math.min(1,(a-flat)/Math.max(1,lim-flat))*P.spr;
+}
+// décalage figurine/balle correspondant à chaque zone : -1 angle haut,
+// 0 plat, +1 angle bas
+function zoneDy(z){
+  if(!z) return 0;
+  const flat=Math.max(1,HY-Math.min(P.crn,HX-.5));
+  return z*(flat+(HY+BR-flat)*0.8);
 }
 function launch(r,dy,dir,pow01,fy){
   const b=S.ball;
@@ -352,7 +358,11 @@ function ai(dt,now){
       let near=Infinity;
       for(let i=0;i<r.n;i++) near=Math.min(near,Math.abs(b.y-figY(r,i)));
       const reach=(b.trap&&b.trap.ri===ri)||(!b.trap&&Math.abs(b.x-r.x)<P.reach*.85&&near<P.reach*.85);
-      if(reach){ const pw=r.kind==='A'?.92:r.kind==='M'?.5:.85; fireKick(ri,DIR(foe),pw*(.55+.45*P.ai)); }
+      if(reach){
+        const pw=r.kind==='A'?.92:r.kind==='M'?.5:.85;
+        const dg=(GY0+GY1)/2-b.y;                    // ramène vers le centre du but
+        fireKick(ri,DIR(foe),pw*(.55+.45*P.ai), dg>90?1:dg<-90?-1:0);
+      }
     }
   }
 }
@@ -508,7 +518,7 @@ function onMsg(d){
     }
   } else if(d.i){                            // entrées venues de l'invité
     MYRODS(1).forEach((ri,k)=>{ RODS[ri].tgt=d.t[k]; });
-  } else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2]); }
+  } else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2],d.k[3]|0); }
   else if(d.rm){ if(NET.mode==='host'){ S.chain++; newMatch(true); } }
   else if(d.p==='end'){ S.phase='end'; S.score=d.sc||S.score; overlay(); }
 }
@@ -586,16 +596,20 @@ function aimLine(){
     if(bd>P.reach) return;
     dy=b.y-figY(r,(()=>{let fi=0,m=Infinity;for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i));if(d<m){m=d;fi=i;}}return fi;})());
   }
-  const dir=DIR(S.me), uy=devi(dy), len=Math.hypot(dir,uy);
-  const ux=dir/len, uyn=uy/len, L=145;
-  const s=V.s;
-  ctx.save();
-  ctx.setLineDash([7,6]); ctx.lineWidth=2;
-  ctx.strokeStyle='rgba(255,224,122,.5)';
-  ctx.beginPath();
-  ctx.moveTo(SX(b.x),SY(b.y));
-  ctx.lineTo(SX(b.x+ux*L),SY(b.y+uyn*L));
-  ctx.stroke(); ctx.restore();
+  const dir=DIR(S.me), L=145;
+  ctx.save(); ctx.setLineDash([7,6]); ctx.lineWidth=2;
+  // balle tenue : on montre les TROIS options de zone ; sinon la seule direction possible
+  const opts = b.trap ? [-1,0,1].map(z=>({uy:devi(zoneDy(z)),main:z===0}))
+                      : [{uy:devi(dy),main:true}];
+  for(const o of opts){
+    const len=Math.hypot(dir,o.uy), ux=dir/len, uyn=o.uy/len;
+    ctx.strokeStyle=o.main?'rgba(255,224,122,.62)':'rgba(255,224,122,.26)';
+    ctx.beginPath();
+    ctx.moveTo(SX(b.x),SY(b.y));
+    ctx.lineTo(SX(b.x+ux*L),SY(b.y+uyn*L));
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 function draw(){
   const w=innerWidth,h=innerHeight,s=V.s;
@@ -685,12 +699,17 @@ addEventListener('pointermove',e=>{
     else if(tdx>tdy*1.25&&tdx>P.trv){
       const dt=Math.max(16,now-w0.t), vx=(x-w0.x)/dt*1000;
       if(Math.abs(vx)>260){
-        const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/2300));
+        const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/Math.max(200,P.pwv)));
         const susp=(G.vtr>40)&&(now-G.lastV<160);
         if(S.sel>=0){
           const dir=(Math.sign(x-w0.x)||1)*(FLIP()?-1:1);
-          if(isHost()) fireKick(S.sel,dir,pw); else { fireKick(S.sel,dir,pw); send({k:[S.sel,dir,pw]}); }
-          S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),suspect:susp,ms:Date.now()-S.t0});
+          // l'inclinaison de la chiquenaude choisit la zone : à plat, angle haut, angle bas
+          const rat=(y-w0.y)/Math.max(1,Math.abs(x-w0.x));
+          let z = rat>0.28 ? 1 : rat<-0.28 ? -1 : 0;
+          if(FLIP()) z=-z;
+          fireKick(S.sel,dir,pw,z);
+          if(!isHost()) send({k:[S.sel,dir,pw,z]});
+          S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),zone:z,suspect:susp,ms:Date.now()-S.t0});
           powBar.style.width=(pw*100).toFixed(0)+'%';
           setTimeout(()=>powBar.style.width='0%',350);
         }
@@ -763,9 +782,9 @@ function overlay(){
      'Le pied a une <b>portée</b>. Toucher un homme, c\'est lui donner la balle — viser les '+
      '<b>intervalles entre figurines</b> est tout le jeu. '+
      'La balle <b>hérite du mouvement de ta barre</b> : coulisser puis claquer, c\'est le tir tiré.<br>'+
-     'Le pied est <b>plat au centre</b> — il renvoie droit — et <b>ouvre aux angles</b>. Balle au pied, '+
-     '<b>glisse lentement pour choisir ta zone</b> (plat ou l\'un des deux angles), vite pour te déplacer. '+
-     'Le trait pointillé montre la direction du tir, jamais les rebonds.'+err,
+     'Balle au pied, l\'angle se choisit <b>dans la chiquenaude</b> : à plat pour tirer droit, '+
+     'en diagonale haute ou basse pour prendre l\'angle. Les trois options sont affichées. '+
+     'La <b>vitesse du geste</b> donne la puissance. Aucun rebond n\'est jamais prédit.'+err,
      [['Solo',()=>{fs();NET.mode='off';S.me=0;newMatch(false);},true],
       ['Créer une partie',()=>{fs();doHost();}],
       ['Rejoindre',()=>{fs();S.phase='code';overlay();}]]);
@@ -816,8 +835,8 @@ document.getElementById('dumpBtn').onclick=()=>{
 };
 
 /* ---------------------------- réglages --------------------------- */
-const KEYS=['ctrl','trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','rollv','slew','stall','ast','ai','trv','win'];
-const INT={trap:1,reach:1,pow:1,slew:1,trv:1,win:1,rollv:1};
+const KEYS=['ctrl','trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','pwv','slew','stall','ast','ai','trv','win'];
+const INT={trap:1,reach:1,pow:1,slew:1,trv:1,win:1,pwv:1};
 function syncTune(){
   KEYS.forEach(k=>{
     const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
