@@ -510,15 +510,14 @@ function doJoin(code){
 /* ------------------------------ rendu ---------------------------- */
 function beads(w){
   const s=V.s, y=TOPH/2+2, r=6.5, gap=17;
+  const LEFT=V.ox+8, RIGHT=V.ox+W*s-8-gap*(WIN_SCORE-1);
   for(let t=0;t<2;t++){
     const col=t===0?'#D65445':'#4E8CC4';
-    const x0=t===0 ? V.ox+8 : V.ox+W*s-8-gap*(WIN_SCORE-1);
-    const shown=FLIP()?(t^1):t;                      // la traverse suit la vue
+    // chaque équipe compte au-dessus de son propre but, donc du côté où la vue le place
+    const base=(t===0)===FLIP() ? RIGHT : LEFT;
     const val=S.score[t];
     for(let i=0;i<WIN_SCORE;i++){
-      const cx=(FLIP()? (V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i) : x0+gap*i);
-      const px=t===0 ? (FLIP()? V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i : V.ox+8+gap*i)
-                     : (FLIP()? V.ox+8+gap*i : V.ox+W*s-8-gap*(WIN_SCORE-1)+gap*i);
+      const px=base+gap*i;
       ctx.beginPath(); ctx.arc(px,y,r,0,7);
       if(i<val){ ctx.fillStyle=col; ctx.fill(); }
       else { ctx.strokeStyle='rgba(142,154,148,.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
@@ -569,8 +568,11 @@ function draw(){
   ctx.strokeRect(V.ox,V.oy,W*s,H*s);
   ctx.beginPath(); ctx.moveTo(SX(W/2),SY(0)); ctx.lineTo(SX(W/2),SY(H)); ctx.stroke();
   ctx.beginPath(); ctx.arc(SX(W/2),SY(H/2),90*s,0,7); ctx.stroke();
-  ctx.fillStyle='#D65445'; ctx.fillRect(SX(FLIP()?W:0)-(FLIP()?0:15),SY(FLIP()?GY1:GY0),15,(GY1-GY0)*s);
-  ctx.fillStyle='#4E8CC4'; ctx.fillRect(SX(FLIP()?0:W)-(FLIP()?15:0),SY(FLIP()?GY1:GY0),15,(GY1-GY0)*s);
+  // le but rouge est en x=0 dans le monde, le bleu en x=W ; SX() place, on ne
+  // décale que vers l'extérieur du terrain
+  const GW=15, gy=Math.min(SY(GY0),SY(GY1)), gh=Math.abs(SY(GY1)-SY(GY0));
+  ctx.fillStyle='#D65445'; ctx.fillRect(SX(0)+(FLIP()?0:-GW),gy,GW,gh);
+  ctx.fillStyle='#4E8CC4'; ctx.fillRect(SX(W)+(FLIP()?-GW:0),gy,GW,gh);
 
   if(S.trail.length>4){
     ctx.lineCap='round';
