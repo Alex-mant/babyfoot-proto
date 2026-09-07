@@ -46,11 +46,18 @@ chacun.
 Claquer plus loin tape dans le vide. C'est ce qui empêche un gardien de frapper
 une balle à l'autre bout de la table.
 
-**Le contrôle selon la vitesse.** Au contact, si la vitesse *relative* balle/barre
-est sous le seuil, la figurine bloque la balle. Au-dessus, elle rebondit. C'est
-tout le dosage des passes : une passe forte arrive vite mais ne se contrôle pas,
-une passe douce se contrôle mais s'intercepte. Et l'endroit où le coéquipier
-bloque la balle détermine l'angle dont il disposera ensuite.
+**Le contrôle de balle.** Réglable en trois régimes, parce qu'un seuil de vitesse
+rend le collage imprévisible — on ne sait pas pourquoi ça a collé cette fois et
+pas la précédente, donc on n'apprend rien.
+
+| Régime | Comportement |
+|---|---|
+| **toujours** (défaut) | tout contact bloque la balle. Toucher un homme, c'est lui donner la balle ; viser les intervalles entre figurines devient tout le jeu. |
+| jamais | aucun collage, physique pure |
+| selon la vitesse | sous le seuil ça bloque, au-dessus ça rebondit |
+
+Les intervalles laissent passer la balle partout : 76 mm aux demis, 141 mm à
+l'attaque, 186 mm en défense, pour une balle de 35 mm.
 
 **Le report de la barre sur la balle.** La figurine est un corps cinématique :
 une barre qui coulisse pousse la balle, et au moment du tir la balle **hérite de

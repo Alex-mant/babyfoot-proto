@@ -83,7 +83,8 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 
 <div id="tune">
   <h3>Réglages</h3>
-  <div class="tr"><label>Seuil de contrôle (mm/s)</label><output id="o_trap"></output><input type="range" id="i_trap" min="200" max="2600" step="25"></div>
+  <div class="tr"><label>Contrôle de balle</label><output id="o_ctrl"></output><input type="range" id="i_ctrl" min="0" max="2" step="1"></div>
+  <div class="tr"><label>Seuil — seulement en mode « selon la vitesse »</label><output id="o_trap"></output><input type="range" id="i_trap" min="200" max="2600" step="25"></div>
   <div class="tr"><label>Report de la barre sur la balle</label><output id="o_carry"></output><input type="range" id="i_carry" min="0" max="1.4" step="0.02"></div>
   <div class="tr"><label>Portée du pied (mm)</label><output id="o_reach"></output><input type="range" id="i_reach" min="28" max="95" step="1"></div>
   <div class="tr"><label>Restitution murs</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
@@ -139,7 +140,7 @@ const T0=[0,1,3,5], T1=[2,4,6,7];          // barres par équipe, ordre croissan
 const MYRODS=t=>t===0?T0:T1;
 
 const DEF={
-  trap:1150, carry:0.60, reach:58,
+  ctrl:1, trap:1150, carry:0.60, reach:58,
   wall:0.70, fric:0.95, figr:0.42,
   pow:2400, spr:0.78, roll:0.30, slew:1500, crn:6,
   ast:0, ai:0.55, trv:25, win:120, stall:2.5, rollv:520,
@@ -286,7 +287,9 @@ function stepSub(dt){
       let rvx=b.vx, rvy=b.vy-vfy;
       const sp=Math.hypot(rvx,rvy);
 
-      if(sp<P.trap && !r.kick){                      // CONTRÔLE
+      // CONTRÔLE — régime binaire et lisible : toucher un homme = perdre la balle
+      const stick = P.ctrl>=2 ? (sp<P.trap) : (P.ctrl>=1);
+      if(stick && !r.kick){
         b.trap={ri,fi:i,off:Math.max(-(HY+BR-2),Math.min(HY+BR-2,dy)),side:Math.sign(dx)||1};
         b.vx=0; b.vy=vfy; S.holdT=0;
         S.log.push({t:'trap',m:S.matchN,team:r.team,rod:r.kind,from:S.last,sp:Math.round(sp),ms:Date.now()-S.t0});
@@ -405,8 +408,15 @@ function goal(t){
 function serve(team){
   const mid=RODS.findIndex(r=>r.team===team&&r.kind==='M'), r=RODS[mid];
   RODS.forEach(q=>q.kick=null);
-  S.ball.trap={ri:mid,fi:(r.n-1)>>1,off:0,side:DIR(team)};
-  S.ball.vx=S.ball.vy=0; S.holdT=0; S.trail.length=0; S.last=team;
+  if(P.ctrl>=1){
+    S.ball.trap={ri:mid,fi:(r.n-1)>>1,off:0,side:DIR(team)};
+    S.ball.vx=S.ball.vy=0;
+  } else {                                   // régime sans collage : engagement roulé
+    S.ball.trap=null;
+    S.ball.x=r.x+DIR(team)*(HX+BR+2); S.ball.y=figY(r,(r.n-1)>>1);
+    S.ball.vx=DIR(team)*P.pow*0.18; S.ball.vy=0;
+  }
+  S.holdT=0; S.trail.length=0; S.last=team;
   if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
   S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on');
 }
@@ -690,7 +700,8 @@ function overlay(){
      'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
      '<b>Boutons à gauche</b> pour changer de barre · <b>glisser ↕</b> n\'importe où pour la déplacer · '+
      '<b>claquer ↔</b> pour frapper.<br>'+
-     'Le pied a une <b>portée</b>. Une balle lente est contrôlée, une balle rapide rebondit. '+
+     'Le pied a une <b>portée</b>. Toucher un homme, c\'est lui donner la balle — viser les '+
+     '<b>intervalles entre figurines</b> est tout le jeu. '+
      'La balle <b>hérite du mouvement de ta barre</b> : coulisser puis claquer, c\'est le tir tiré.<br>'+
      'Le pied est <b>plat au centre</b> — il renvoie droit — et <b>ouvre aux angles</b>. Balle au pied, '+
      '<b>glisse lentement pour choisir ta zone</b> (plat ou l\'un des deux angles), vite pour te déplacer. '+
@@ -745,13 +756,15 @@ document.getElementById('dumpBtn').onclick=()=>{
 };
 
 /* ---------------------------- réglages --------------------------- */
-const KEYS=['trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','rollv','slew','stall','ast','ai','trv','win'];
+const KEYS=['ctrl','trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','rollv','slew','stall','ast','ai','trv','win'];
 const INT={trap:1,reach:1,pow:1,slew:1,trv:1,win:1,rollv:1};
 function syncTune(){
   KEYS.forEach(k=>{
     const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
-    i.value=P[k]; o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
-    i.oninput=()=>{P[k]=+i.value;o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
+    const CTRLN=['jamais','toujours','selon la vitesse'];
+    const fmt=v=>k==='ctrl'?CTRLN[v]:(INT[k]?v:(+v).toFixed(2));
+    i.value=P[k]; o.textContent=fmt(P[k]);
+    i.oninput=()=>{P[k]=+i.value;o.textContent=fmt(P[k]);
       try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}};
   });
 }
