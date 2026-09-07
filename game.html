@@ -89,14 +89,14 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   <div class="tr"><label>Restitution murs</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
   <div class="tr"><label>Friction tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
   <div class="tr"><label>Restitution figurine</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.1" max="0.8" step="0.01"></div>
-  <div class="tr"><label>Puissance max (mm/s)</label><output id="o_pow"></output><input type="range" id="i_pow" min="2500" max="8000" step="100"></div>
+  <div class="tr"><label>Puissance max (mm/s)</label><output id="o_pow"></output><input type="range" id="i_pow" min="800" max="5000" step="50"></div>
   <div class="tr"><label>Ouverture du tir</label><output id="o_spr"></output><input type="range" id="i_spr" min="0.2" max="1.3" step="0.02"></div>
   <div class="tr"><label>Arrondi des angles (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="12" step="0.5"></div>
   <div class="tr"><label>Roulement sous le pied</label><output id="o_roll"></output><input type="range" id="i_roll" min="0" max="0.9" step="0.02"></div>
   <div class="tr"><label>Vitesse barre (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
   <div class="tr"><label>Vitesse de bascule roulé/porté</label><output id="o_rollv"></output><input type="range" id="i_rollv" min="120" max="1600" step="20"></div>
   <div class="tr"><label>Délai balle morte (s)</label><output id="o_stall"></output><input type="range" id="i_stall" min="0.8" max="6" step="0.1"></div>
-  <div class="tr"><label>Suivi barres non tenues</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
+  <div class="tr"><label>Suivi auto des barres libres — 0 = aucun</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
   <div class="tr"><label>Niveau de l'IA (solo)</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.15" max="1" step="0.05"></div>
   <div class="tr"><label>Seuil chiquenaude (px)</label><output id="o_trv"></output><input type="range" id="i_trv" min="10" max="70" step="1"></div>
   <div class="tr"><label>Fenêtre chiquenaude (ms)</label><output id="o_win"></output><input type="range" id="i_win" min="60" max="260" step="10"></div>
@@ -139,13 +139,13 @@ const T0=[0,1,3,5], T1=[2,4,6,7];          // barres par équipe, ordre croissan
 const MYRODS=t=>t===0?T0:T1;
 
 const DEF={
-  trap:1150, carry:0.85, reach:58,
-  wall:0.70, fric:0.80, figr:0.42,
-  pow:4600, spr:0.78, roll:0.30, slew:1900, crn:6,
-  ast:0.35, ai:0.55, trv:25, win:120, stall:2.5, rollv:520,
+  trap:1150, carry:0.60, reach:58,
+  wall:0.70, fric:0.95, figr:0.42,
+  pow:2400, spr:0.78, roll:0.30, slew:1500, crn:6,
+  ast:0, ai:0.55, trv:25, win:120, stall:2.5, rollv:520,
 };
 let P=Object.assign({},DEF);
-try{const t=localStorage.getItem('bf3_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
+try{const t=localStorage.getItem('bf4_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
 const KICK_MS=130, HOLD_MAX=15000, WIN_SCORE=5;
 
 const S={
@@ -220,6 +220,11 @@ function applyKicks(){
   }
 }
 const figY=(r,i)=>H/2+(i-(r.n-1)/2)*r.sp+r.off;
+// plafond dur : le report de la barre peut sinon dépasser la puissance maximale
+function capV(){
+  const b=S.ball, sp=Math.hypot(b.vx,b.vy), m=P.pow*1.1;
+  if(sp>m){ b.vx=b.vx/sp*m; b.vy=b.vy/sp*m; }
+}
 
 // zone plate -> tout droit ; au-dela, l'angle ouvre progressivement
 function devi(dy){
@@ -239,6 +244,7 @@ function launch(r,dy,dir,pow01,fy){
   b.vy=uyn*v + r.vy*P.carry;
   b.y=Math.max(BR,Math.min(H-BR,fy+dy));
   b.x=r.x+ux*(HX+BR+1.5);
+  capV();
   S.last=r.team;
 }
 function hit(r,h){ S.log.push({t:'kick',m:S.matchN,team:r.team,rod:r.kind,hit:h,ms:Date.now()-S.t0}); }
@@ -294,6 +300,7 @@ function stepSub(dt){
   }
   const k=Math.exp(-P.fric*dt);
   b.vx*=k; b.vy*=k;
+  capV();
   return null;
 }
 function stepPhysics(dt){
@@ -745,12 +752,12 @@ function syncTune(){
     const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
     i.value=P[k]; o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
     i.oninput=()=>{P[k]=+i.value;o.textContent=INT[k]?P[k]:(+P[k]).toFixed(2);
-      try{localStorage.setItem('bf3_tune',JSON.stringify(P));}catch(e){}};
+      try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}};
   });
 }
 document.getElementById('tuneBtn').onclick=()=>document.getElementById('tune').classList.toggle('on');
 document.getElementById('resetBtn').onclick=()=>{P=Object.assign({},DEF);syncTune();
-  try{localStorage.setItem('bf3_tune',JSON.stringify(P));}catch(e){}};
+  try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}};
 document.getElementById('menuBtn').onclick=()=>{
   document.getElementById('tune').classList.remove('on');
   if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;
