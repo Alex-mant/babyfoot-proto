@@ -1,0 +1,7 @@
+{
+  "appId": "com.alexmant.babyfoot",
+  "appName": "Babyfoot",
+  "webDir": "www",
+  "android": { "allowMixedContent": true },
+  "server": { "androidScheme": "https" }
+}

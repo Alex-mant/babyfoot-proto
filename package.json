@@ -1,0 +1,13 @@
+{
+  "name": "babyfoot-proto",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototype de validation - babyfoot au tour par possession",
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  }
+}
