@@ -35,19 +35,19 @@ Match en 5 buts. Le score est incrusté en boules de compteur sur la traverse.
 
 ## Les contrôles
 
-L'écran est coupé en deux, un pouce de chaque côté. Les deux moitiés
-fonctionnent **en même temps** : on place et on frappe simultanément.
+**Deux mains, deux barres**, comme sur une vraie table. Chaque moitié d'écran est
+une main : le pouce tient une poignée et en pilote les deux mouvements. Les deux
+mains agissent **en même temps** — on bloque d'une main pendant qu'on arme de
+l'autre, ce qui était impossible tant qu'on ne pilotait qu'une barre.
 
 | Zone | Geste | Effet |
 |---|---|---|
-| Colonne de gauche | toucher | sélectionner la barre — rangées dans leur ordre spatial sur le terrain |
-| Colonne de gauche | **AUTO** | la barre se choisit seule. Elle ne se **déplace** jamais seule : toucher une barre à la main coupe le mode |
-| **Moitié gauche** | glisser ↕ | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
-| **Moitié droite** | glisser ↔ | **le pouce est la poignée** : la barre tourne avec lui, s'arrête où on s'arrête, retombe quand on lâche |
-| Moitié droite | vitesse du glissement | la puissance, qui n'est plus un réglage — elle sort de la vitesse à laquelle on tourne |
-
-La séparation supprime tout départage de geste, donc le tir accidentel en
-plaçant — qui était la principale source de frustration — n'est plus possible.
+| Colonne de gauche | toucher | la barre tenue par la **main gauche** |
+| Colonne de droite | toucher | la barre tenue par la **main droite** |
+| **AUTO** | toucher | place les deux mains sur les barres les plus proches de la balle |
+| Moitié d'écran | glisser ↕ | coulisser la barre de cette main |
+| Moitié d'écran | glisser ↔ | la tourner. On s'arrête, elle reste ; on lâche, elle retombe en blocage |
+| Moitié d'écran | vitesse du glissement | la puissance, qui n'est pas un réglage — elle sort de la vitesse à laquelle on tourne |
 
 Chaque joueur voit la table depuis son propre côté : la vue de l'invité est
 pivotée de 180°, donc les gestes restent absolus pour chacun et les deux
@@ -129,10 +129,9 @@ atteignable par personne.
 
 ## L'IA (solo)
 
-Elle ne pilote qu'**une seule barre à la fois**, celle qui est la plus proche de
-la balle — les autres reviennent au repos. Faire suivre les quatre barres en même
-temps n'est pas jouable par un humain, qui n'en tient qu'une : c'est ce qui la
-rendait imbattable, d'autant plus depuis que chaque barre balaie toute la largeur.
+Elle pilote **deux barres**, les plus proches de la balle — les autres reviennent
+au repos. Exactement ce que peut faire un joueur avec ses deux mains. Elle en
+pilotait quatre avec un suivi parfait, ce qui la rendait imbattable.
 
 Son niveau est un **temps de réaction**, pas une précision : elle vise la balle
 telle qu'elle l'a perçue il y a un instant. Elle ne frappe pas non plus une balle
