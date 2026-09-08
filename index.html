@@ -25,10 +25,9 @@ body{height:100dvh;color:var(--ink);font-family:var(--f-d);font-size:15px;
 canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 
 /* colonne de barres, dans la marge gauche */
-#rods,#rodsR{position:absolute;top:0;bottom:0;width:clamp(66px,9vw,92px);z-index:3;
-  display:flex;flex-direction:column;gap:5px;padding:6px}
-#rods{left:0;padding-left:calc(6px + env(safe-area-inset-left))}
-#rodsR{right:0;padding-right:calc(6px + env(safe-area-inset-right))}
+#rods{position:absolute;left:0;top:0;bottom:0;width:clamp(72px,11vw,104px);z-index:3;
+  display:flex;flex-direction:column;gap:6px;
+  padding:6px 6px 6px calc(6px + env(safe-area-inset-left))}
 .rodbtn{flex:1 1 0;min-height:0;font-family:var(--f-m);font-size:.62rem;font-weight:600;
   border:1px solid var(--line);background:rgba(22,29,25,.86);color:var(--ink-3);
   border-radius:8px;cursor:pointer;padding:.2rem .1rem;line-height:1.1;
@@ -51,7 +50,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   display:grid;grid-template-columns:1fr 1fr;justify-items:center;pointer-events:none}
 #hint span{font-family:var(--f-m);font-size:.6rem;font-weight:600;letter-spacing:.1em;
   color:var(--ink-2);background:rgba(15,20,17,.78);padding:.2rem .55rem;border-radius:4px}
-#tuneBtn{position:absolute;left:50%;transform:translateX(-50%);top:6px;z-index:4;
+#tuneBtn{position:absolute;right:calc(6px + env(safe-area-inset-right));top:6px;z-index:4;
   background:rgba(22,29,25,.86);border:1px solid var(--line);color:var(--ink-3);
   font-family:var(--f-m);font-size:.62rem;font-weight:600;padding:.28rem .45rem;border-radius:4px;cursor:pointer}
 
@@ -96,9 +95,8 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 <body>
 <canvas id="cv"></canvas>
 <div id="rods"></div>
-<div id="rodsR"></div>
 <div id="pow"></div>
-<div id="hint"><span>main gauche · ↕ coulisser ↔ tourner</span><span>main droite · ↕ coulisser ↔ tourner</span></div>
+<div id="hint"><span>↕ placer</span><span>↔ tourner</span></div>
 <button id="tuneBtn">RÉG</button>
 
 <div id="ov" class="on"><div class="box">
@@ -179,7 +177,7 @@ let P=Object.assign({},DEF);
 try{const t=localStorage.getItem('bf8_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
 
 const S={
-  phase:'menu', score:[0,0], me:0, selL:-1, selR:-1,
+  phase:'menu', score:[0,0], me:0, sel:-1,
   ball:{x:W/2,y:H/2,vx:0,vy:0},
   flash:0, trail:[], serveTo:1, stall:0, aiMem:[],
   matchN:0, chain:0, t0:0, firstGoalMs:null, log:[], auto:false,
@@ -204,16 +202,15 @@ const footVX = r => P.lf*Math.cos(r.th)*r.om;
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let V={s:1,ox:0,oy:0};
 const TOPH=34;
-const GUTL=()=>(document.getElementById('rods').offsetWidth||70)+8;
-const GUTR=()=>(document.getElementById('rodsR').offsetWidth||70)+8;
+const GUT=()=>(document.getElementById('rods').offsetWidth||72)+8;
 function resize(){
   const dpr=Math.min(devicePixelRatio||1,2.5), w=innerWidth, h=innerHeight;
   cv.width=Math.max(1,Math.round(w*dpr)); cv.height=Math.max(1,Math.round(h*dpr));
   cv.style.width=w+'px'; cv.style.height=h+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const gl=GUTL(), gr=GUTR(), aw=w-gl-gr, ah=h-TOPH-8;
+  const g=GUT(), aw=w-g-10, ah=h-TOPH-8;
   const s=Math.min(aw/W,ah/H);
-  V.s=s; V.ox=gl+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
+  V.s=s; V.ox=g+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
 }
 const SX=x=>V.ox+(FLIP()?(W-x):x)*V.s;
 const SY=y=>V.oy+(FLIP()?(H-y):y)*V.s;
@@ -350,8 +347,8 @@ function ai(dt,now){
   // suivre les quatre en même temps n'est pas jouable par un humain, qui n'en
   // tient qu'une : c'est ce qui rendait l'IA imbattable, d'autant plus depuis
   // que chaque barre balaie toute la largeur.
-  // deux barres actives : l'IA a deux mains, comme le joueur
-  const act=MYRODS(foe).slice().sort((p,q)=>Math.abs(b.x-RODS[p].x)-Math.abs(b.x-RODS[q].x)).slice(0,2);
+  let act=-1, bd=Infinity;
+  for(const ri of MYRODS(foe)){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;act=ri;} }
 
   // Temps de réaction : l'IA vise la balle telle qu'elle l'a perçue il y a
   // un instant, pas telle qu'elle est. C'est le vrai curseur de difficulté.
@@ -363,7 +360,7 @@ function ai(dt,now){
   for(const ri of MYRODS(foe)){
     const r=RODS[ri];
     r.held=true;
-    if(!act.includes(ri)){              // les autres reviennent au repos et bloquent
+    if(ri!==act){                       // les autres reviennent au repos et bloquent
       r.tgt += (0-r.tgt)*Math.min(1,1.5*dt);
       r.thTgt = 0;
       continue;
@@ -389,7 +386,7 @@ function assist(dt){
   if(P.ast<=0) return;
   const b=S.ball;
   for(const ri of MYRODS(S.me)){
-    if(ri===S.selL||ri===S.selR) continue;
+    if(ri===S.sel) continue;
     const r=RODS[ri];
     let fi=0,bd=Infinity;
     for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd){bd=d;fi=i;}}
@@ -397,23 +394,13 @@ function assist(dt){
     r.tgt+=(want-r.tgt)*Math.min(1,4*P.ast*dt);
   }
 }
-// place les deux mains sur les deux barres les plus proches de la balle
-function handsToBall(){
-  const b=S.ball;
-  const near=MYRODS(S.me).slice()
-    .sort((p,q)=>Math.abs(b.x-RODS[p].x)-Math.abs(b.x-RODS[q].x)).slice(0,2);
-  near.sort((p,q)=>RODS[p].x-RODS[q].x);
-  if(FLIP()) near.reverse();
-  S.selL=near[0]; S.selR=near[1];
-}
 function autoSel(){
   if(!S.auto||S.phase!=='play') return;
-  const b=S.ball;
-  const near=MYRODS(S.me).slice()
-    .sort((p,q)=>Math.abs(b.x-RODS[p].x)-Math.abs(b.x-RODS[q].x)).slice(0,2);
-  near.sort((p,q)=>RODS[p].x-RODS[q].x);          // la plus à gauche à la main gauche
-  if(FLIP()) near.reverse();
-  S.selL=near[0]; S.selR=near[1];
+  const b=S.ball, mine=MYRODS(S.me);
+  let best=S.sel, bd=Infinity;
+  for(const ri of mine){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;best=ri;} }
+  if(best!==S.sel && mine.includes(S.sel) && Math.abs(b.x-RODS[S.sel].x)-bd < 45) return;
+  S.sel=best;
 }
 
 /* ------------------------------ boucle --------------------------- */
@@ -454,7 +441,7 @@ function serve(team){
   S.ball.x=W/2; S.ball.y=H/2;
   S.ball.vx=-DIR(team)*P.vmax*0.14; S.ball.vy=0;
   S.stall=0; S.trail.length=0;
-  if(S.selL<0||S.selR<0||RODS[S.selL].team!==S.me||RODS[S.selR].team!==S.me) handsToBall();
+  if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
   S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on'); chrome();
 }
 function newMatch(keep){
@@ -501,7 +488,7 @@ function onMsg(d){
     if(d.p!==S.phase){
       S.phase=d.p;
       if(d.p==='play'){
-        if(S.selL<0||S.selR<0||RODS[S.selL].team!==S.me||RODS[S.selR].team!==S.me) handsToBall();
+        if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
         document.getElementById('ov').classList.remove('on'); buildRods(); chrome();
       } else overlay();
     }
@@ -555,10 +542,9 @@ function rrect(x,y,w,h,r){
 }
 // direction que prendrait la balle si le pied la touchait maintenant :
 // la normale du contact. Géométrie au présent, jamais une prédiction de rebond.
-function aimLine(){ aimOne(S.selL); aimOne(S.selR); }
-function aimOne(sel){
-  if(S.phase!=='play'||sel<0) return;
-  const r=RODS[sel], b=S.ball;
+function aimLine(){
+  if(S.phase!=='play'||S.sel<0) return;
+  const r=RODS[S.sel], b=S.ball;
   if(!r||r.team!==S.me||!footDown(r)) return;
   const fx=footX(r);
   let fi=-1,m=Infinity;
@@ -611,7 +597,7 @@ function draw(){
   }
   const cr=Math.min(P.crn,FHX-.5);
   for(let ri=0;ri<RODS.length;ri++){
-    const r=RODS[ri], mine=r.team===S.me, act=(ri===S.selL||ri===S.selR), down=footDown(r), fx=footX(r);
+    const r=RODS[ri], mine=r.team===S.me, act=ri===S.sel, down=footDown(r), fx=footX(r);
     ctx.strokeStyle=act?'#4FB183':(mine?'#B9C6BF':'rgba(142,154,148,.45)');
     ctx.lineWidth=act?3:(mine?2.2:1.7);
     ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-20)); ctx.lineTo(SX(r.x),SY(H+20)); ctx.stroke();
@@ -647,66 +633,63 @@ const guard=t=>!!(t.closest&&(t.closest('#rods')||t.closest('#tune')||t.closest(
 
 addEventListener('pointerdown',e=>{
   if(guard(e.target)||S.phase!=='play') return;
-  const left=e.clientX < innerWidth/2;
-  const ri = left ? S.selL : S.selR;
   const g={id:e.pointerId,px:e.clientX,py:e.clientY,x0:e.clientX,
-           ri:ri, th0:(RODS[ri]?RODS[ri].th:0)};
-  if(left){ if(!Gs){ Gs=g; grab(ri); } }
-  else    { if(!Gf){ Gf=g; grab(ri); } }
+           ri:S.sel, th0:(RODS[S.sel]?RODS[S.sel].th:0)};
+  if(e.clientX < innerWidth/2){ if(!Gs) Gs=g; }
+  else if(!Gf){ Gf=g; grab(S.sel); }
   e.preventDefault();
 },{passive:false});
 
-// Un pouce tient une barre et en pilote les DEUX degrés de liberté, comme une
-// main sur une poignée : vertical pour coulisser, horizontal pour tourner.
-// La translation est incrémentale (on peut repositionner le pouce), la
-// rotation est absolue depuis le point d'appui (on peut tenir un angle).
-function moveHand(g,x,y){
-  const r=RODS[g.ri]; if(!r||r.team!==S.me) return;
+function moveSlide(g,x,y){
   const dy=y-g.py;
   if(dy!==0){
-    const d=(dy/Math.max(.001,V.s))*(FLIP()?-1:1);
-    r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt+d));
+    const r=RODS[S.sel];
+    if(r&&r.team===S.me){
+      const d=(dy/Math.max(.001,V.s))*(FLIP()?-1:1);
+      r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt+d));
+    }
   }
+  g.px=x; g.py=y;
+}
+// Le pouce EST la poignée : le déplacement horizontal donne l'angle, et la
+// puissance sort toute seule de la vitesse à laquelle on tourne.
+function moveTurn(g,x){
+  if(g.ri<0) return;
+  const r=RODS[g.ri]; if(!r||r.team!==S.me) return;
   r.held=true;
   r.thTgt=Math.max(-Math.PI,Math.min(Math.PI,
           g.th0+(x-g.x0)*P.thsens*(FLIP()?-1:1)));
-  g.px=x; g.py=y;
 }
 addEventListener('pointermove',e=>{
   const x=e.clientX, y=e.clientY;
   for(const g of [Gs,Gf]){
     if(!g||g.id!==e.pointerId) continue;
-    moveHand(g,x,y);
+    if(g===Gs) moveSlide(g,x,y); else moveTurn(g,x);
     e.preventDefault();
   }
 },{passive:false});
 ['pointerup','pointercancel'].forEach(ev=>addEventListener(ev,e=>{
-  if(Gs&&Gs.id===e.pointerId){ release(Gs.ri); Gs=null; }   // main lâchée : la figurine retombe
-  if(Gf&&Gf.id===e.pointerId){ release(Gf.ri); Gf=null; }
+  if(Gs&&Gs.id===e.pointerId) Gs=null;
+  if(Gf&&Gf.id===e.pointerId){ release(Gf.ri); Gf=null; }   // poignée lâchée : la figurine retombe
 },{passive:false}));
 
 /* -------------------------------- UI ----------------------------- */
 function buildRods(){
-  const L=document.getElementById('rods'), R=document.getElementById('rodsR');
-  L.innerHTML=''; R.innerHTML='';
-  if(S.phase!=='play'){ resize(); return; }
+  const host=document.getElementById('rods'); host.innerHTML='';
+  if(S.phase!=='play') return;
   const list=MYRODS(S.me).slice(); if(FLIP()) list.reverse();
-  const col=(host,cur,set)=>{
-    for(const ri of list){
-      const r=RODS[ri], el=document.createElement('button');
-      el.className='rodbtn t'+r.team+(ri===cur?' on':'');
-      el.innerHTML='<span class="lab">'+r.kind+'</span>'+KN[r.kind];
-      el.onpointerdown=ev=>{ev.stopPropagation();S.auto=false;saveAuto();set(ri);buildRods();};
-      host.appendChild(el);
-    }
-  };
-  col(L,S.selL,ri=>{ if(ri===S.selR) S.selR=S.selL; S.selL=ri; });
-  col(R,S.selR,ri=>{ if(ri===S.selL) S.selL=S.selR; S.selR=ri; });
+  for(const ri of list){
+    const r=RODS[ri], el=document.createElement('button');
+    el.className='rodbtn t'+r.team+(ri===S.sel?' on':'');
+    el.innerHTML='<span class="lab">'+r.kind+'</span>'+KN[r.kind];
+    el.onpointerdown=ev=>{ev.stopPropagation();S.auto=false;saveAuto();S.sel=ri;buildRods();};
+    host.appendChild(el);
+  }
   const a=document.createElement('button');
   a.className='autobtn'+(S.auto?' on':'');
   a.innerHTML='<b>AUTO</b>'+(S.auto?'activé':'manuel');
   a.onpointerdown=ev=>{ev.stopPropagation();S.auto=!S.auto;saveAuto();buildRods();};
-  L.appendChild(a);
+  host.appendChild(a);
   resize();
 }
 function saveAuto(){ try{localStorage.setItem('bf6_auto',S.auto?'1':'0');}catch(e){} }
@@ -722,7 +705,7 @@ let bstate='';
 setInterval(()=>{
   chrome();
   if(S.phase!=='play') return;
-  const k=S.selL+'|'+S.selR+'|'+S.auto;
+  const k=S.sel+'|'+S.auto;
   if(k!==bstate){ bstate=k; buildRods(); }
   if(NET.mode!=='off'&&NET.up&&performance.now()-NET.lastRx>4000){
     NET.up=false; NET.err='Connexion perdue.'; S.phase='menu'; overlay();
@@ -748,12 +731,10 @@ function overlay(){
      'et la chiquenaude ne fait que lui donner de l\'élan. Elle frappe la balle où qu\'elle soit '+
      'sur son arc, puis revient — comme une main qui tient la poignée. '+
      '<b>Trop haute, elle laisse passer la balle dessous.</b><br><br>'+
-     '<b>Deux mains, deux barres</b>, comme sur une vraie table. Chaque moitié d\'écran est une main : '+
-     'ton pouce tient une poignée et en pilote les deux mouvements — <b>vertical pour coulisser, '+
-     'horizontal pour tourner</b>. Tu t\'arrêtes, la barre reste à l\'angle où tu l\'as laissée ; tu '+
-     'lâches, elle retombe en blocage. La puissance sort de la vitesse à laquelle tu tournes.<br>'+
-     'Les colonnes de gauche et de droite choisissent la barre de chaque main, '+
-     '<b>AUTO</b> les place sur les plus proches de la balle. '+
+     'Écran coupé en deux : <b>moitié gauche, glisser ↕</b> pour coulisser · '+
+     '<b>moitié droite : ton pouce est la poignée.</b> Tu glisses, la barre tourne ; tu t\'arrêtes, '+
+     'elle reste à l\'angle où tu l\'as laissée ; tu lâches, elle retombe. La puissance sort de la '+
+     'vitesse à laquelle tu tournes. '+
      'Le pied <b>adhère</b> : balance la barre pour aller chercher une balle sur le côté, '+
      'elle suit et s\'arrête avec toi.'+err,
      [['Solo',()=>{fs();NET.mode='off';S.me=0;newMatch(false);},true],
