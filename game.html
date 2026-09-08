@@ -96,24 +96,23 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 
 <div id="tune">
   <h3>Réglages</h3>
-  <div class="tr"><label>Contrôle de balle</label><output id="o_ctrl"></output><input type="range" id="i_ctrl" min="0" max="2" step="1"></div>
-  <div class="tr"><label>Seuil — seulement en mode « selon la vitesse »</label><output id="o_trap"></output><input type="range" id="i_trap" min="200" max="2600" step="25"></div>
-  <div class="tr"><label>Report de la barre sur la balle</label><output id="o_carry"></output><input type="range" id="i_carry" min="0" max="1.4" step="0.02"></div>
-  <div class="tr"><label>Portée du pied (mm)</label><output id="o_reach"></output><input type="range" id="i_reach" min="28" max="95" step="1"></div>
-  <div class="tr"><label>Restitution murs</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
-  <div class="tr"><label>Friction tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
-  <div class="tr"><label>Restitution figurine</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.1" max="0.8" step="0.01"></div>
-  <div class="tr"><label>Puissance max (mm/s)</label><output id="o_pow"></output><input type="range" id="i_pow" min="800" max="5000" step="50"></div>
-  <div class="tr"><label>Ouverture du tir</label><output id="o_spr"></output><input type="range" id="i_spr" min="0.2" max="1.3" step="0.02"></div>
-  <div class="tr"><label>Arrondi des angles (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="12" step="0.5"></div>
-  <div class="tr"><label>Roulement sous le pied</label><output id="o_roll"></output><input type="range" id="i_roll" min="0" max="0.9" step="0.02"></div>
-  <div class="tr"><label>Vitesse barre (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
-  <div class="tr"><label>Vitesse pour puissance max (px/s)</label><output id="o_pwv"></output><input type="range" id="i_pwv" min="600" max="5000" step="50"></div>
+  <div class="tr"><label>Longueur de la figurine (mm)</label><output id="o_lf"></output><input type="range" id="i_lf" min="35" max="85" step="1"></div>
+  <div class="tr"><label>Vitesse angulaire max (rad/s)</label><output id="o_omax"></output><input type="range" id="i_omax" min="8" max="60" step="1"></div>
+  <div class="tr"><label>Pesanteur (× réel)</label><output id="o_grav"></output><input type="range" id="i_grav" min="0.2" max="3" step="0.05"></div>
+  <div class="tr"><label>Amortissement rotation (/s)</label><output id="o_adamp"></output><input type="range" id="i_adamp" min="0.4" max="8" step="0.1"></div>
+  <div class="tr"><label>Adhérence du pied</label><output id="o_grip"></output><input type="range" id="i_grip" min="0" max="0.95" step="0.02"></div>
+  <div class="tr"><label>Restitution du pied</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.05" max="0.7" step="0.01"></div>
+  <div class="tr"><label>Arrondi du pied (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="8" step="0.5"></div>
+  <div class="tr"><label>Restitution des bandes</label><output id="o_wall"></output><input type="range" id="i_wall" min="0.4" max="0.95" step="0.01"></div>
+  <div class="tr"><label>Friction du tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
+  <div class="tr"><label>Vitesse max de la balle (mm/s)</label><output id="o_vmax"></output><input type="range" id="i_vmax" min="1200" max="5000" step="50"></div>
+  <div class="tr"><label>Vitesse de coulissement (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
   <div class="tr"><label>Délai balle morte (s)</label><output id="o_stall"></output><input type="range" id="i_stall" min="0.8" max="6" step="0.1"></div>
   <div class="tr"><label>Suivi auto des barres libres — 0 = aucun</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
   <div class="tr"><label>Niveau de l'IA (solo)</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.15" max="1" step="0.05"></div>
   <div class="tr"><label>Seuil chiquenaude (px)</label><output id="o_trv"></output><input type="range" id="i_trv" min="10" max="70" step="1"></div>
   <div class="tr"><label>Fenêtre chiquenaude (ms)</label><output id="o_win"></output><input type="range" id="i_win" min="60" max="260" step="10"></div>
+  <div class="tr"><label>Vitesse pour puissance max (px/s)</label><output id="o_pwv"></output><input type="range" id="i_pwv" min="600" max="5000" step="50"></div>
   <div class="btns" style="margin:.5rem 0 .4rem">
     <button class="bigbtn" id="dumpBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Journal</button>
     <button class="bigbtn" id="resetBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Défauts</button>
@@ -127,16 +126,21 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 <script>
 "use strict";
 /* ==================================================================
-   BABYFOOT — temps réel, 1v1 en ligne, plein écran
-   Portée du pied · contrôle selon la vitesse relative · report de la
-   vitesse de barre sur la balle (tir tiré)
+   BABYFOOT — moteur physique fidèle
+   La figurine est un PENDULE monté sur la barre. Deux degrés de
+   liberté : translation le long de la barre, rotation autour d'elle.
+   Rien n'est « appliqué » à la balle : elle est frappée quand le pied
+   la rencontre, à la vitesse qu'a ce pied à cet instant.
    ================================================================== */
 
-const W=1200,H=680,GY0=240,GY1=440,BR=17.5,FR=21;
-const HX=13, HY=22;   // demi-dimensions du pied : mince dans l'axe de jeu, large en travers
-// Ordre reel : G_r . D_r . A_b . M_r . M_b . A_r . D_b . G_b
-// Rouge progresse en 0-1-3-5 vers la droite, bleu en 7-6-4-2 vers la gauche.
-// La defense d'une equipe est toujours entre son gardien et l'attaque adverse.
+const W=1200, H=680, GY0=240, GY1=440;
+const BR=17.5;                 // rayon de la balle (35 mm, liège Bonzini)
+const FHX=9, FHY=20;           // demi-dimensions du pied
+const G=9810;                  // pesanteur, mm/s²
+
+// Ordre réel : G_r · D_r · A_b · M_r · M_b · A_r · D_b · G_b
+// Chaque équipe progresse vers le but adverse, sa défense toujours
+// entre son gardien et l'attaque adverse.
 const RODS=[
   {x:  75,team:0,n:1,sp:  0,span:110,kind:'G'},
   {x: 225,team:0,n:2,sp:230,span:115,kind:'D'},
@@ -149,30 +153,40 @@ const RODS=[
 ];
 const KN={G:'gardien',D:'défense',M:'demis',A:'attaque'};
 const DIR=t=>t===0?1:-1;
-const T0=[0,1,3,5], T1=[2,4,6,7];          // barres par équipe, ordre croissant en x
+const T0=[0,1,3,5], T1=[2,4,6,7];
 const MYRODS=t=>t===0?T0:T1;
 
 const DEF={
-  ctrl:1, trap:1150, carry:0.60, reach:58,
-  wall:0.70, fric:0.95, figr:0.42,
-  pow:2400, spr:0.78, roll:0, slew:1500, crn:6,
-  ast:0, ai:0.55, trv:25, win:120, stall:2.5, pwv:2600,
+  lf:55, omax:26, grav:1, adamp:2.6,
+  grip:0.55, figr:0.22, crn:4,
+  wall:0.70, fric:0.90, vmax:2600, slew:1500,
+  stall:2.5, ast:0, ai:0.55,
+  trv:25, win:120, pwv:2600,
 };
 let P=Object.assign({},DEF);
-try{const t=localStorage.getItem('bf4_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
-const KICK_MS=130, HOLD_MAX=15000, WIN_SCORE=5;
+try{const t=localStorage.getItem('bf6_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
 
 const S={
   phase:'menu', score:[0,0], me:0, sel:-1,
-  ball:{x:W/2,y:H/2,vx:0,vy:0,trap:null},
-  holdT:0, flash:0, trail:[], serveTo:1, last:-1, stall:0,
+  ball:{x:W/2,y:H/2,vx:0,vy:0},
+  flash:0, trail:[], serveTo:1, stall:0,
   matchN:0, chain:0, t0:0, firstGoalMs:null, log:[], auto:false,
 };
 const NET={mode:'off', peer:null, conn:null, code:'', up:false, lastRx:0, err:''};
-RODS.forEach(r=>{r.off=0;r.tgt=0;r.vy=0;r.kick=null;r.aiT=0;r.aiT2=0;});
+RODS.forEach(r=>{r.off=0; r.tgt=0; r.vy=0; r.th=0; r.om=0; r.aiT=0; r.aiT2=0;});
 
 const isHost=()=>NET.mode==='host'||NET.mode==='off';
 const FLIP=()=>S.me===1;
+const figY=(r,i)=>H/2+(i-(r.n-1)/2)*r.sp+r.off;
+
+/* --------- géométrie du pendule ---------
+   th = 0 : la figurine pend, pied au sol, en position de blocage.
+   En tournant, le pied avance en x et s'élève ; passé la hauteur de la
+   balle, il ne la touche plus et elle passe dessous.                     */
+const footX  = r => r.x + P.lf*Math.sin(r.th);
+const footH  = r => P.lf*(1-Math.cos(r.th));
+const footDown = r => footH(r) < BR*2;
+const footVX = r => P.lf*Math.cos(r.th)*r.om;
 
 /* ------------------------------ vue ------------------------------ */
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
@@ -180,13 +194,11 @@ let V={s:1,ox:0,oy:0};
 const TOPH=34;
 const GUT=()=>(document.getElementById('rods').offsetWidth||72)+8;
 function resize(){
-  const dpr=Math.min(devicePixelRatio||1,2.5);
-  const w=innerWidth, h=innerHeight;
+  const dpr=Math.min(devicePixelRatio||1,2.5), w=innerWidth, h=innerHeight;
   cv.width=Math.max(1,Math.round(w*dpr)); cv.height=Math.max(1,Math.round(h*dpr));
   cv.style.width=w+'px'; cv.style.height=h+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const g=GUT();
-  const aw=w-g-10, ah=h-TOPH-8;
+  const g=GUT(), aw=w-g-10, ah=h-TOPH-8;
   const s=Math.min(aw/W,ah/H);
   V.s=s; V.ox=g+(aw-W*s)/2; V.oy=TOPH+(ah-H*s)/2;
 }
@@ -194,144 +206,110 @@ const SX=x=>V.ox+(FLIP()?(W-x):x)*V.s;
 const SY=y=>V.oy+(FLIP()?(H-y):y)*V.s;
 addEventListener('resize',resize);
 
-/* --------------------------- barres ------------------------------ */
-function moveRods(dt){
-  const b=S.ball;
-  for(let ri=0;ri<RODS.length;ri++){
-    const r=RODS[ri];
+/* --------------------------- les barres -------------------------- */
+function stepRods(h){
+  for(const r of RODS){
+    // translation : coulissement borné, vitesse limitée
     r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt));
-    const d=r.tgt-r.off;
-    const step=Math.sign(d)*Math.min(Math.abs(d),P.slew*dt);
-    if(step!==0&&dt>0){
-      r.off+=step; r.vy=step/dt;
-      // balle tenue : collée par défaut. Le glissement sert à se placer en
-      // travers du terrain, jamais à régler l'angle — celui-ci se choisit
-      // dans la chiquenaude.
-      if(b.trap&&b.trap.ri===ri&&P.roll>0) b.trap.off-=step*P.roll;
-    } else r.vy=0;
+    const d=r.tgt-r.off, step=Math.sign(d)*Math.min(Math.abs(d),P.slew*h);
+    r.off+=step; r.vy=(h>0)?step/h:0;
     r.off=Math.max(-r.span,Math.min(r.span,r.off));
+
+    // rotation : pendule amorti. La figurine retombe d'elle-même en
+    // position de blocage, exactement comme sur une vraie table.
+    r.om -= (G*P.grav/P.lf)*Math.sin(r.th)*h;
+    r.om *= Math.exp(-P.adamp*h);
+    r.th += r.om*h;
+    // pas de roulette : le tour complet est interdit, comme en compétition
+    if(r.th> Math.PI){ r.th= Math.PI; r.om=Math.min(0,r.om); }
+    if(r.th<-Math.PI){ r.th=-Math.PI; r.om=Math.max(0,r.om); }
   }
 }
-
-/* ------------------------------ tir ------------------------------ */
-function fireKick(ri,dir,pow,z){ const r=RODS[ri]; if(!r.kick) r.kick={dir,pow,z:z|0,t:KICK_MS/1000,applied:false}; }
-
-function applyKicks(){
-  const b=S.ball;
-  for(let ri=0;ri<RODS.length;ri++){
-    const r=RODS[ri]; if(!r.kick||r.kick.applied) continue;
-    if(b.trap&&b.trap.ri===ri){
-      // balle tenue : l'angle vient de la zone choisie, pas d'un décalage subi
-      launch(r,zoneDy(r.kick.z),r.kick.dir,r.kick.pow,figY(r,b.trap.fi));
-      r.kick.applied=true; hit(r,true); continue;
-    }
-    if(b.trap) continue;                                   // tenue ailleurs : intouchable
-    if(Math.abs(b.x-r.x)>P.reach) continue;                // PORTÉE
-    let fi=-1,bd=Infinity;
-    for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd){bd=d;fi=i;}}
-    if(bd>P.reach) continue;
-    launch(r,b.y-figY(r,fi),r.kick.dir,r.kick.pow,figY(r,fi));
-    r.kick.applied=true; hit(r,true);
-  }
+// la chiquenaude ne fait qu'une chose : donner de la vitesse angulaire
+function swing(ri,dir,pow01){
+  const r=RODS[ri];
+  r.om = dir*P.omax*(0.25+0.75*Math.max(0,Math.min(1,pow01)));
+  S.log.push({t:'swing',m:S.matchN,team:r.team,rod:r.kind,pow:+pow01.toFixed(2),ms:Date.now()-S.t0});
 }
-const figY=(r,i)=>H/2+(i-(r.n-1)/2)*r.sp+r.off;
-// plafond dur : le report de la barre peut sinon dépasser la puissance maximale
-function capV(){
-  const b=S.ball, sp=Math.hypot(b.vx,b.vy), m=P.pow*1.1;
-  if(sp>m){ b.vx=b.vx/sp*m; b.vy=b.vy/sp*m; }
-}
-
-// zone plate -> tout droit ; au-dela, l'angle ouvre progressivement
-function devi(dy){
-  const flat=Math.max(1,HY-P.crn), lim=HY+BR;
-  const a=Math.abs(dy);
-  if(a<=flat) return 0;
-  return Math.sign(dy)*Math.min(1,(a-flat)/Math.max(1,lim-flat))*P.spr;
-}
-// décalage figurine/balle correspondant à chaque zone : -1 angle haut,
-// 0 plat, +1 angle bas
-function zoneDy(z){
-  if(!z) return 0;
-  const flat=Math.max(1,HY-Math.min(P.crn,HX-.5));
-  return z*(flat+(HY+BR-flat)*0.8);
-}
-function launch(r,dy,dir,pow01,fy){
-  const b=S.ball;
-  const uy=devi(dy);
-  const len=Math.hypot(dir,uy), ux=dir/len, uyn=uy/len;
-  const v=P.pow*(0.26+0.74*pow01);
-  b.trap=null;
-  b.vx=ux*v;
-  // la balle hérite de la vitesse latérale de la barre : c'est le tir tiré
-  b.vy=uyn*v + r.vy*P.carry;
-  b.y=Math.max(BR,Math.min(H-BR,fy+dy));
-  b.x=r.x+ux*(HX+BR+1.5);
-  capV();
-  S.last=r.team;
-}
-function hit(r,h){ S.log.push({t:'kick',m:S.matchN,team:r.team,rod:r.kind,hit:h,ms:Date.now()-S.t0}); }
 
 /* ---------------------------- physique --------------------------- */
-function stepSub(dt){
+function capV(){
+  const b=S.ball, sp=Math.hypot(b.vx,b.vy);
+  if(sp>P.vmax){ b.vx=b.vx/sp*P.vmax; b.vy=b.vy/sp*P.vmax; }
+}
+function stepSub(h){
+  stepRods(h);
   const b=S.ball;
-  if(b.trap){
-    const r=RODS[b.trap.ri];
-    b.trap.off=Math.max(-(HY+BR-2),Math.min(HY+BR-2,b.trap.off));
-    b.y=Math.max(BR,Math.min(H-BR,figY(r,b.trap.fi)+b.trap.off));
-    b.x=r.x+b.trap.side*(HX+BR-3);
-    b.vx=0; b.vy=r.vy*(1-P.roll);
-    return null;
-  }
-  b.x+=b.vx*dt; b.y+=b.vy*dt;
+  b.x+=b.vx*h; b.y+=b.vy*h;
+
   if(b.y<BR){b.y=BR;b.vy=-b.vy*P.wall;}
   if(b.y>H-BR){b.y=H-BR;b.vy=-b.vy*P.wall;}
   if(b.x<BR){ if(b.y>GY0&&b.y<GY1) return 'g1'; b.x=BR;b.vx=-b.vx*P.wall; }
   if(b.x>W-BR){ if(b.y>GY0&&b.y<GY1) return 'g0'; b.x=W-BR;b.vx=-b.vx*P.wall; }
 
-  for(let ri=0;ri<RODS.length;ri++){
-    const r=RODS[ri];
-    if(Math.abs(b.x-r.x)>HX+BR) continue;
+  const cr=Math.min(P.crn,FHX-0.5,FHY-0.5);
+  for(const r of RODS){
+    if(!footDown(r)) continue;            // figurine levée : la balle passe dessous
+    const fx=footX(r);
+    if(Math.abs(b.x-fx)>FHX+BR) continue;
+    const svx=footVX(r), svy=r.vy;        // vitesse de la surface du pied
     for(let i=0;i<r.n;i++){
-      const fy=figY(r,i), dx=b.x-r.x, dy=b.y-fy;
-      // point le plus proche sur le rectangle a angles arrondis
-      const cr=Math.min(P.crn,HX-0.5,HY-0.5), rr=cr+BR;
-      const ix=Math.max(-(HX-cr),Math.min(HX-cr,dx));
-      const iy=Math.max(-(HY-cr),Math.min(HY-cr,dy));
+      const fy=figY(r,i), dx=b.x-fx, dy=b.y-fy;
+      // point le plus proche sur le pied, rectangle à angles arrondis :
+      // face plate au centre qui renvoie droit, angles qui ouvrent
+      const ix=Math.max(-(FHX-cr),Math.min(FHX-cr,dx));
+      const iy=Math.max(-(FHY-cr),Math.min(FHY-cr,dy));
       let ox=dx-ix, oy=dy-iy, d=Math.hypot(ox,oy);
+      const rr=cr+BR;
       if(d>=rr) continue;
       if(d<1e-6){ ox=Math.sign(dx)||1; oy=0; d=1; }
       const nx=ox/d, ny=oy/d;
-      b.x=r.x+ix+nx*rr; b.y=fy+iy+ny*rr;
+      b.x=fx+ix+nx*rr; b.y=fy+iy+ny*rr;
 
-      // figurine = corps cinématique : on travaille en vitesse RELATIVE
-      const vfy=r.vy*P.carry;
-      let rvx=b.vx, rvy=b.vy-vfy;
-      const sp=Math.hypot(rvx,rvy);
-
-      // CONTRÔLE — régime binaire et lisible : toucher un homme = perdre la balle
-      const stick = P.ctrl>=2 ? (sp<P.trap) : (P.ctrl>=1);
-      if(stick && !r.kick){
-        b.trap={ri,fi:i,off:Math.max(-(HY+BR-2),Math.min(HY+BR-2,dy)),side:Math.sign(dx)||1};
-        b.vx=0; b.vy=vfy; S.holdT=0;
-        S.log.push({t:'trap',m:S.matchN,team:r.team,rod:r.kind,from:S.last,sp:Math.round(sp),ms:Date.now()-S.t0});
-        S.last=r.team; return null;
-      }
-      const vn=rvx*nx+rvy*ny;                        // sinon rebond, puis réinjection
+      // tout se joue dans le repère du pied : c'est lui qui bouge
+      let rvx=b.vx-svx, rvy=b.vy-svy;
+      const vn=rvx*nx+rvy*ny;
       if(vn<0){ rvx-=(1+P.figr)*vn*nx; rvy-=(1+P.figr)*vn*ny; }
-      b.vx=rvx; b.vy=rvy+vfy;
-      S.last=r.team;
+      // adhérence : le pied entraîne la balle au lieu de la laisser filer
+      const vn2=rvx*nx+rvy*ny, tx=rvx-vn2*nx, ty=rvy-vn2*ny;
+      rvx-=tx*P.grip; rvy-=ty*P.grip;
+      b.vx=rvx+svx; b.vy=rvy+svy;
     }
   }
-  const k=Math.exp(-P.fric*dt);
+  const k=Math.exp(-P.fric*h);
   b.vx*=k; b.vy*=k;
   capV();
   return null;
 }
 function stepPhysics(dt){
-  const b=S.ball, sp=Math.hypot(b.vx,b.vy);
-  const n=Math.max(1,Math.min(28,Math.ceil(sp*dt/(BR*0.5))));
+  const b=S.ball;
+  let mv=Math.hypot(b.vx,b.vy);
+  for(const r of RODS) mv=Math.max(mv, Math.abs(r.om)*P.lf, Math.abs(r.vy));
+  const n=Math.max(1,Math.min(48,Math.ceil(mv*dt/(BR*0.4))));
   for(let i=0;i<n;i++){ const g=stepSub(dt/n); if(g) return g; }
   return null;
+}
+
+/* --------------------------- balle morte ------------------------- */
+const DZONE=[
+  RODS.find(r=>r.team===0&&r.kind==='D').x,
+  RODS.find(r=>r.team===1&&r.kind==='D').x,
+];
+function revive(){
+  const b=S.ball;
+  let own=-1;
+  if(b.x<DZONE[0]) own=0; else if(b.x>DZONE[1]) own=1;
+  let bx=0,by=0,bd=Infinity;
+  for(const r of RODS){
+    if(own>=0 && r.team!==own) continue;
+    for(let i=0;i<r.n;i++){
+      const fy=figY(r,i), d=Math.hypot(b.x-r.x,b.y-fy);
+      if(d<bd){ bd=d; bx=r.x; by=fy; }
+    }
+  }
+  const dx=bx-b.x, dy=by-b.y, len=Math.hypot(dx,dy)||1, v=P.vmax*0.18;
+  b.vx=dx/len*v; b.vy=dy/len*v;
+  S.log.push({t:'revive',m:S.matchN,zone:own,ms:Date.now()-S.t0});
 }
 
 /* -------------------------------- IA ----------------------------- */
@@ -350,36 +328,18 @@ function ai(dt,now){
     }
     const d=r.aiT2-r.off;
     r.tgt=r.off+Math.sign(d)*Math.min(Math.abs(d),P.slew*P.ai*dt);
-    if(!r.kick){
+    // frappe quand la balle entre dans l'arc du pied, du bon côté
+    if(Math.abs(r.om)<1.5){
       let near=Infinity;
       for(let i=0;i<r.n;i++) near=Math.min(near,Math.abs(b.y-figY(r,i)));
-      const reach=(b.trap&&b.trap.ri===ri)||(!b.trap&&Math.abs(b.x-r.x)<P.reach*.85&&near<P.reach*.85);
-      if(reach){
-        const pw=r.kind==='A'?.92:r.kind==='M'?.5:.85;
-        const dg=(GY0+GY1)/2-b.y;                    // ramène vers le centre du but
-        fireKick(ri,DIR(foe),pw*(.55+.45*P.ai), dg>90?1:dg<-90?-1:0);
+      const ahead=(b.x-r.x)*DIR(foe);
+      if(near<FHY+BR+6 && ahead>-(FHX+BR+4) && ahead<P.lf){
+        const pw=r.kind==='A'?.92:r.kind==='M'?.55:.85;
+        swing(ri,DIR(foe),pw*(.55+.45*P.ai));
       }
     }
   }
 }
-
-/* --------------------- sélection automatique --------------------- */
-// choisit la barre la plus pertinente. Elle ne déplace jamais rien :
-// les barres restent entièrement sous le doigt du joueur.
-function autoSel(){
-  if(!S.auto||S.phase!=='play') return;
-  const b=S.ball, mine=MYRODS(S.me);
-  if(b.trap && RODS[b.trap.ri].team===S.me){ S.sel=b.trap.ri; return; }
-  let best=S.sel, bd=Infinity;
-  for(const ri of mine){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;best=ri;} }
-  // hystérésis : on ne bascule que si la nouvelle barre est nettement plus proche
-  if(best!==S.sel && mine.includes(S.sel)){
-    if(Math.abs(b.x-RODS[S.sel].x)-bd < 45) return;
-  }
-  S.sel=best;
-}
-
-/* ------------------------- suivi barres libres ------------------- */
 function assist(dt){
   if(P.ast<=0) return;
   const b=S.ball;
@@ -392,65 +352,34 @@ function assist(dt){
     r.tgt+=(want-r.tgt)*Math.min(1,4*P.ast*dt);
   }
 }
+function autoSel(){
+  if(!S.auto||S.phase!=='play') return;
+  const b=S.ball, mine=MYRODS(S.me);
+  let best=S.sel, bd=Infinity;
+  for(const ri of mine){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;best=ri;} }
+  if(best!==S.sel && mine.includes(S.sel) && Math.abs(b.x-RODS[S.sel].x)-bd < 45) return;
+  S.sel=best;
+}
 
 /* ------------------------------ boucle --------------------------- */
 const DT=1/240; let lastT=performance.now(), acc=0, netAcc=0;
 function loop(now){
   const dr=Math.min(.05,(now-lastT)/1000); lastT=now;
   if(S.phase==='play'){
-    autoSel();
-    assist(dr);
+    autoSel(); assist(dr);
     if(NET.mode==='off') ai(dr,now);
-    moveRods(dr);
-    for(const r of RODS){ if(r.kick){ r.kick.t-=dr; if(r.kick.t<=0) r.kick=null; } }
     acc+=dr; let res=null;
-    while(acc>=DT&&!res){ if(isHost()) applyKicks(); res=stepPhysics(DT); acc-=DT; }
-    if(!S.ball.trap){
-      S.trail.push(S.ball.x,S.ball.y); if(S.trail.length>260) S.trail.splice(0,2);
-      if(isHost()){                                  // BALLE MORTE
-        if(Math.hypot(S.ball.vx,S.ball.vy)<90) S.stall+=dr; else S.stall=0;
-        if(S.stall>P.stall){ revive(); S.stall=0; }
-      }
-    } else {
-      S.stall=0;
-      if(isHost()){
-        S.holdT+=dr*1000;
-        if(S.holdT>HOLD_MAX){ fireKick(S.ball.trap.ri,DIR(RODS[S.ball.trap.ri].team),.35); S.holdT=0; }
-      }
+    while(acc>=DT&&!res){ res=stepPhysics(DT); acc-=DT; }
+    S.trail.push(S.ball.x,S.ball.y); if(S.trail.length>260) S.trail.splice(0,2);
+    if(isHost()){
+      if(Math.hypot(S.ball.vx,S.ball.vy)<90) S.stall+=dr; else S.stall=0;
+      if(S.stall>P.stall){ revive(); S.stall=0; }
+      if(res) goal(res==='g0'?0:1);
     }
-    if(res&&isHost()) goal(res==='g0'?0:1);
     netAcc+=dr; if(netAcc>=1/60){ netAcc=0; netTick(); }
   } else acc=0;
   if(S.flash>0) S.flash=Math.max(0,S.flash-dr*1.5);
   draw(); requestAnimationFrame(loop);
-}
-
-// Balle morte : elle roule doucement vers une figurine, assez lentement pour
-// être contrôlée à l'arrivée.
-// Derrière la barre de défense d'une équipe, elle revient obligatoirement à
-// cette équipe — sinon l'adversaire hérite d'une balle devant un but dégarni
-// alors que le défenseur aurait dû la récupérer. C'est la règle ITSF de la
-// balle morte entre le but et la barre de 2.
-const DZONE=[
-  RODS.find(r=>r.team===0&&r.kind==='D').x,   // en deçà : zone défensive rouge
-  RODS.find(r=>r.team===1&&r.kind==='D').x,   // au-delà : zone défensive bleue
-];
-function revive(){
-  const b=S.ball;
-  let own=-1;
-  if(b.x<DZONE[0]) own=0; else if(b.x>DZONE[1]) own=1;
-  let bx=0,by=0,bd=Infinity;
-  for(const r of RODS){
-    if(own>=0 && r.team!==own) continue;
-    for(let i=0;i<r.n;i++){
-      const fy=figY(r,i), d=Math.hypot(b.x-r.x,b.y-fy);
-      if(d<bd){ bd=d; bx=r.x; by=fy; }
-    }
-  }
-  const dx=bx-b.x, dy=by-b.y, len=Math.hypot(dx,dy)||1;
-  const v=P.trap*0.4;
-  b.vx=dx/len*v; b.vy=dy/len*v;
-  S.log.push({t:'revive',m:S.matchN,zone:own,ms:Date.now()-S.t0});
 }
 
 function goal(t){
@@ -460,79 +389,69 @@ function goal(t){
   if(S.score[t]>=WIN_SCORE){ S.phase='end'; overlay(); send({p:'end',sc:S.score}); return; }
   S.phase='pause'; setTimeout(()=>serve(t^1),800);
 }
+const WIN_SCORE=5;
 function serve(team){
-  const mid=RODS.findIndex(r=>r.team===team&&r.kind==='M'), r=RODS[mid];
-  RODS.forEach(q=>q.kick=null);
-  if(P.ctrl>=1){
-    S.ball.trap={ri:mid,fi:(r.n-1)>>1,off:0,side:DIR(team)};
-    S.ball.vx=S.ball.vy=0;
-  } else {                                   // régime sans collage : engagement roulé
-    S.ball.trap=null;
-    S.ball.x=r.x+DIR(team)*(HX+BR+2); S.ball.y=figY(r,(r.n-1)>>1);
-    S.ball.vx=DIR(team)*P.pow*0.18; S.ball.vy=0;
-  }
-  S.holdT=0; S.trail.length=0; S.last=team;
+  // remise en jeu au centre, roulée vers le camp de celui qui a encaissé
+  RODS.forEach(r=>{ r.om=0; r.th=0; });
+  S.ball.x=W/2; S.ball.y=H/2;
+  S.ball.vx=-DIR(team)*P.vmax*0.14; S.ball.vy=0;
+  S.stall=0; S.trail.length=0;
   if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
   S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on'); chrome();
 }
 function newMatch(keep){
   S.score=[0,0]; S.matchN++; S.firstGoalMs=null; S.t0=Date.now();
   if(!keep) S.chain=0;
-  RODS.forEach(r=>{r.off=0;r.tgt=0;r.kick=null;});
-  // le premier engagement est tiré au sort, ensuite il alterne : sans ça
-  // l'hôte engageait toujours le premier match
+  RODS.forEach(r=>{r.off=0;r.tgt=0;r.th=0;r.om=0;});
   S.serveTo = (S.matchN===1) ? (Math.random()<0.5?0:1) : (S.serveTo^1);
   serve(S.serveTo);
 }
 
 /* ------------------------------ réseau --------------------------- */
 function send(o){ if(NET.conn&&NET.up){ try{NET.conn.send(o);}catch(e){} } }
+function sendCfg(){ if(NET.mode==='host') send({cfg:P}); }
 function netTick(){
   if(NET.mode==='off'||!NET.up) return;
   const b=S.ball;
   if(NET.mode==='host'){
     send({s:1, b:[Math.round(b.x*4)/4,Math.round(b.y*4)/4,Math.round(b.vx),Math.round(b.vy)],
-          tr:b.trap?[b.trap.ri,b.trap.fi,Math.round(b.trap.off*4)/4,b.trap.side]:0,
-          r:RODS.map(r=>Math.round(r.off*4)/4), sc:S.score, p:S.phase,
-          m:S.matchN, ch:S.chain});
+          r:RODS.map(r=>Math.round(r.off*4)/4),
+          a:RODS.map(r=>Math.round(r.th*1000)/1000),
+          sc:S.score, p:S.phase, m:S.matchN, ch:S.chain});
   } else {
     send({i:1, t:MYRODS(1).map(ri=>Math.round(RODS[ri].tgt*4)/4)});
   }
 }
 function onMsg(d){
   NET.lastRx=performance.now();
-  if(d.s){                                   // état venu de l'hôte
+  if(d.s){
     const b=S.ball;
     b.x=d.b[0]; b.y=d.b[1]; b.vx=d.b[2]; b.vy=d.b[3];
-    b.trap=d.tr?{ri:d.tr[0],fi:d.tr[1],off:d.tr[2],side:d.tr[3]}:null;
-    for(let i=0;i<8;i++){ const r=RODS[i];
-      if(r.team===S.me) continue;            // mes barres restent prédites en local
-      r.off=d.r[i]; r.tgt=d.r[i];
+    for(let i=0;i<8;i++){
+      const r=RODS[i];
+      if(r.team===S.me) continue;      // mes barres restent prédites en local
+      r.off=d.r[i]; r.tgt=d.r[i]; r.th=d.a[i];
     }
     S.score=d.sc;
     if(d.ch!==undefined) S.chain=d.ch;
     if(d.m!==undefined && d.m!==S.matchN){
-      // même remise à zéro que newMatch() chez l'hôte : sans ça les barres de
-      // l'invité repartaient à leur ancienne position et son chrono ne
-      // redémarrait jamais, faussant le temps jusqu'au premier but
       S.matchN=d.m; S.t0=Date.now(); S.firstGoalMs=null;
-      for(const ri of MYRODS(S.me)){ const r=RODS[ri]; r.off=0; r.tgt=0; r.kick=null; }
+      for(const ri of MYRODS(S.me)){ const r=RODS[ri]; r.off=0; r.tgt=0; r.th=0; r.om=0; }
     }
     if(d.p!==S.phase){
       S.phase=d.p;
-      if(d.p==='play'){ if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
-        document.getElementById('ov').classList.remove('on'); buildRods(); }
-      else overlay();
+      if(d.p==='play'){
+        if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
+        document.getElementById('ov').classList.remove('on'); buildRods(); chrome();
+      } else overlay();
     }
-  } else if(d.i){                            // entrées venues de l'invité
-    MYRODS(1).forEach((ri,k)=>{ RODS[ri].tgt=d.t[k]; });
-  } else if(d.cfg){ Object.assign(P,d.cfg); syncTune(); }
+  } else if(d.i){ MYRODS(1).forEach((ri,k)=>{ RODS[ri].tgt=d.t[k]; }); }
+  else if(d.cfg){ Object.assign(P,d.cfg); syncTune(); }
   else if(d.cf){ if(NET.mode==='host'){ P[d.cf[0]]=+d.cf[1]; syncTune(); sendCfg(); } }
-  else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2],d.k[3]|0); }
+  else if(d.k){ swing(d.k[0],d.k[1],d.k[2]); }
   else if(d.rm){ if(NET.mode==='host'){ S.chain++; S.log.push({t:'rematch',chain:S.chain}); save(); newMatch(true); } }
   else if(d.p==='end'){ S.phase='end'; S.score=d.sc||S.score; overlay(); }
 }
-function sendCfg(){ if(NET.mode==='host') send({cfg:P}); }
 function wire(c){
   NET.conn=c;
   c.on('open',()=>{ NET.up=true; NET.lastRx=performance.now();
@@ -545,12 +464,10 @@ function wire(c){
 const ALPH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const mkCode=()=>Array.from({length:4},()=>ALPH[Math.floor(Math.random()*ALPH.length)]).join('');
 function netFail(m){ NET.err=m; NET.mode='off'; if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.peer=null; S.phase='menu'; overlay(); }
-
 function doHost(){
   if(typeof Peer==='undefined') return netFail("La bibliothèque réseau n'a pas pu être chargée.");
-  NET.mode='host'; NET.code=mkCode(); NET.err='';
-  S.phase='hosting'; overlay();
-  NET.peer=new Peer('bf3-'+NET.code,{debug:0});
+  NET.mode='host'; NET.code=mkCode(); NET.err=''; S.phase='hosting'; overlay();
+  NET.peer=new Peer('bf6-'+NET.code,{debug:0});
   NET.peer.on('open',()=>{ S.phase='hosting'; overlay(); });
   NET.peer.on('connection',c=>wire(c));
   NET.peer.on('error',e=>{
@@ -562,80 +479,59 @@ function doJoin(code){
   if(typeof Peer==='undefined') return netFail("La bibliothèque réseau n'a pas pu être chargée.");
   NET.mode='guest'; NET.err=''; S.phase='joining'; overlay();
   NET.peer=new Peer({debug:0});
-  NET.peer.on('open',()=>{ wire(NET.peer.connect('bf3-'+code,{reliable:true})); });
-  NET.peer.on('error',e=>{
-    netFail(e&&e.type==='peer-unavailable' ? 'Aucune partie avec ce code.'
-      : "Réseau indisponible ici. Utilise l'APK ou la page GitHub Pages, pas l'aperçu web.");
-  });
+  NET.peer.on('open',()=>{ wire(NET.peer.connect('bf6-'+code,{reliable:true})); });
+  NET.peer.on('error',e=>netFail(e&&e.type==='peer-unavailable' ? 'Aucune partie avec ce code.'
+    : "Réseau indisponible ici. Utilise l'APK ou la page GitHub Pages, pas l'aperçu web."));
 }
 
 /* ------------------------------ rendu ---------------------------- */
-function beads(w){
-  const s=V.s, y=TOPH/2+2, r=6.5, gap=17;
-  const LEFT=V.ox+8, RIGHT=V.ox+W*s-8-gap*(WIN_SCORE-1);
-  for(let t=0;t<2;t++){
-    const col=t===0?'#D65445':'#4E8CC4';
-    // chaque équipe compte au-dessus de son propre but, donc du côté où la vue le place
-    const base=(t===0)===FLIP() ? RIGHT : LEFT;
-    const val=S.score[t];
-    for(let i=0;i<WIN_SCORE;i++){
-      const px=base+gap*i;
-      ctx.beginPath(); ctx.arc(px,y,r,0,7);
-      if(i<val){ ctx.fillStyle=col; ctx.fill(); }
-      else { ctx.strokeStyle='rgba(142,154,148,.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
-      if(t===S.me&&i===0){ ctx.fillStyle=col; ctx.font='600 9px '+'"JetBrains Mono",monospace';
-        ctx.textAlign='left'; ctx.fillText('TOI',px-r,y+r+10); }
-    }
-  }
-}
 function rrect(x,y,w,h,r){
   ctx.beginPath();
   if(ctx.roundRect) ctx.roundRect(x,y,w,h,r);
   else{ ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
         ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 }
-// direction du tir seulement — aucun rebond n'est calculé ni montre
+// direction que prendrait la balle si le pied la touchait maintenant :
+// la normale du contact. Géométrie au présent, jamais une prédiction de rebond.
 function aimLine(){
   if(S.phase!=='play'||S.sel<0) return;
   const r=RODS[S.sel], b=S.ball;
-  if(!r||r.team!==S.me) return;
-  let dy;
-  if(b.trap){ if(b.trap.ri!==S.sel) return; dy=b.trap.off; }
-  else{
-    if(Math.abs(b.x-r.x)>P.reach) return;
-    let bd=Infinity;
-    for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i)); if(d<bd)bd=d;}
-    if(bd>P.reach) return;
-    dy=b.y-figY(r,(()=>{let fi=0,m=Infinity;for(let i=0;i<r.n;i++){const d=Math.abs(b.y-figY(r,i));if(d<m){m=d;fi=i;}}return fi;})());
-  }
-  const dir=DIR(S.me), L=145;
+  if(!r||r.team!==S.me||!footDown(r)) return;
+  const fx=footX(r);
+  let fi=-1,m=Infinity;
+  for(let i=0;i<r.n;i++){ const d=Math.hypot(b.x-fx,b.y-figY(r,i)); if(d<m){m=d;fi=i;} }
+  if(m>FHX+FHY+BR+10) return;
+  const dx=b.x-fx, dy=b.y-figY(r,fi), len=Math.hypot(dx,dy)||1;
   ctx.save(); ctx.setLineDash([7,6]); ctx.lineWidth=2;
-  // balle tenue : on montre les TROIS options de zone ; sinon la seule direction possible
-  const opts = b.trap ? [-1,0,1].map(z=>({uy:devi(zoneDy(z)),main:z===0}))
-                      : [{uy:devi(dy),main:true}];
-  for(const o of opts){
-    const len=Math.hypot(dir,o.uy), ux=dir/len, uyn=o.uy/len;
-    ctx.strokeStyle=o.main?'rgba(255,224,122,.62)':'rgba(255,224,122,.26)';
-    ctx.beginPath();
-    ctx.moveTo(SX(b.x),SY(b.y));
-    ctx.lineTo(SX(b.x+ux*L),SY(b.y+uyn*L));
-    ctx.stroke();
+  ctx.strokeStyle='rgba(255,224,122,.55)';
+  ctx.beginPath(); ctx.moveTo(SX(b.x),SY(b.y));
+  ctx.lineTo(SX(b.x+dx/len*150),SY(b.y+dy/len*150)); ctx.stroke(); ctx.restore();
+}
+function beads(){
+  const s=V.s, y=TOPH/2+2, rr=6.5, gap=17;
+  const LEFT=V.ox+8, RIGHT=V.ox+W*s-8-gap*(WIN_SCORE-1);
+  for(let t=0;t<2;t++){
+    const col=t===0?'#D65445':'#4E8CC4';
+    const base=(t===0)===FLIP() ? RIGHT : LEFT;
+    for(let i=0;i<WIN_SCORE;i++){
+      const px=base+gap*i;
+      ctx.beginPath(); ctx.arc(px,y,rr,0,7);
+      if(i<S.score[t]){ ctx.fillStyle=col; ctx.fill(); }
+      else { ctx.strokeStyle='rgba(142,154,148,.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
+      if(t===S.me&&i===0){ ctx.fillStyle=col; ctx.font='600 9px "JetBrains Mono",monospace';
+        ctx.textAlign='left'; ctx.fillText('TOI',px-rr,y+rr+10); }
+    }
   }
-  ctx.restore();
 }
 function draw(){
   const w=innerWidth,h=innerHeight,s=V.s;
   ctx.fillStyle='#0F1411'; ctx.fillRect(0,0,w,h);
-  // caisse
-  ctx.fillStyle='#12211A';
-  ctx.fillRect(V.ox-9,V.oy-9,W*s+18,H*s+18);
+  ctx.fillStyle='#12211A'; ctx.fillRect(V.ox-9,V.oy-9,W*s+18,H*s+18);
   ctx.fillStyle='#1B4B37'; ctx.fillRect(V.ox,V.oy,W*s,H*s);
   ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.lineWidth=1.4;
   ctx.strokeRect(V.ox,V.oy,W*s,H*s);
   ctx.beginPath(); ctx.moveTo(SX(W/2),SY(0)); ctx.lineTo(SX(W/2),SY(H)); ctx.stroke();
   ctx.beginPath(); ctx.arc(SX(W/2),SY(H/2),90*s,0,7); ctx.stroke();
-  // le but rouge est en x=0 dans le monde, le bleu en x=W ; SX() place, on ne
-  // décale que vers l'extérieur du terrain
   const GW=15, gy=Math.min(SY(GY0),SY(GY1)), gh=Math.abs(SY(GY1)-SY(GY0));
   ctx.fillStyle='#D65445'; ctx.fillRect(SX(0)+(FLIP()?0:-GW),gy,GW,gh);
   ctx.fillStyle='#4E8CC4'; ctx.fillRect(SX(W)+(FLIP()?-GW:0),gy,GW,gh);
@@ -650,48 +546,39 @@ function draw(){
       ctx.lineTo(SX(S.trail[i]),SY(S.trail[i+1])); ctx.stroke();
     }
   }
+  const cr=Math.min(P.crn,FHX-.5);
   for(let ri=0;ri<RODS.length;ri++){
-    const r=RODS[ri], mine=r.team===S.me, act=ri===S.sel;
+    const r=RODS[ri], mine=r.team===S.me, act=ri===S.sel, down=footDown(r), fx=footX(r);
     ctx.strokeStyle=act?'#4FB183':(mine?'#B9C6BF':'rgba(142,154,148,.45)');
     ctx.lineWidth=act?3:(mine?2.2:1.7);
     ctx.beginPath(); ctx.moveTo(SX(r.x),SY(-20)); ctx.lineTo(SX(r.x),SY(H+20)); ctx.stroke();
     for(let i=0;i<r.n;i++){
       const fy=figY(r,i);
-      rrect(SX(r.x)-HX*s,SY(fy)-HY*s,HX*2*s,HY*2*s,Math.min(P.crn,HX-.5)*s);
+      // la jambe, de l'axe de la barre jusqu'au pied : elle montre la rotation
+      ctx.strokeStyle='rgba(180,192,186,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(SX(r.x),SY(fy)); ctx.lineTo(SX(fx),SY(fy)); ctx.stroke();
+      rrect(SX(fx)-FHX*s,SY(fy)-FHY*s,FHX*2*s,FHY*2*s,cr*s);
       ctx.fillStyle=r.team===0?'#D65445':'#4E8CC4';
-      ctx.globalAlpha=mine?1:.8; ctx.fill(); ctx.globalAlpha=1;
-      ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=1.4; ctx.stroke();
-      if(r.kick){
-        ctx.strokeStyle='rgba(255,224,122,.9)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(SX(r.x),SY(fy));
-        ctx.lineTo(SX(r.x+r.kick.dir*P.reach),SY(fy)); ctx.stroke();
-      }
+      ctx.globalAlpha=down?(mine?1:.82):.3;      // figurine levée : la balle passe dessous
+      ctx.fill(); ctx.globalAlpha=1;
+      ctx.strokeStyle=down?'rgba(0,0,0,.45)':'rgba(255,255,255,.35)';
+      ctx.lineWidth=1.4; if(!down) ctx.setLineDash([3,3]);
+      ctx.stroke(); ctx.setLineDash([]);
     }
   }
   const b=S.ball;
-  if(b.trap){                       // limites de la zone plate : plat au centre, angles au-dela
-    const r=RODS[b.trap.ri], fy=figY(r,b.trap.fi);
-    const flat=Math.max(1,HY-Math.min(P.crn,HX-.5)), sx=SX(r.x), ex=(HX+3)*s*b.trap.side*(FLIP()?-1:1);
-    ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=1.6;
-    for(const sgn of [-1,1]){
-      const yy=SY(fy+sgn*flat);
-      ctx.beginPath(); ctx.moveTo(sx+ex*0.7,yy); ctx.lineTo(sx+ex*1.5,yy); ctx.stroke();
-    }
-  }
   aimLine();
   ctx.beginPath(); ctx.arc(SX(b.x),SY(b.y),BR*s,0,7);
-  ctx.fillStyle=b.trap?'#FFE07A':'#F5E9C8'; ctx.fill();
+  ctx.fillStyle='#F5E9C8'; ctx.fill();
   ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke();
-  beads(w);
+  beads();
   if(S.flash>0){ ctx.fillStyle='rgba(255,255,255,'+(S.flash*.3).toFixed(3)+')'; ctx.fillRect(0,0,w,h); }
 }
 
 /* ------------------------------ gestes --------------------------- */
+// Écran coupé en deux : moitié gauche = coulisser la barre, moitié droite =
+// lancer la rotation. Deux pointeurs suivis en parallèle, un par moitié.
 const powBar=document.getElementById('pow');
-// L'écran est coupé en deux : moitié gauche = placer la barre, moitié droite =
-// frapper. Plus aucun départage de geste à faire, donc plus de tir accidentel.
-// Deux pointeurs suivis en parallèle, un par moitié : on place et on frappe en
-// même temps, un pouce de chaque côté.
 let Gs=null, Gf=null;
 const guard=t=>!!(t.closest&&(t.closest('#rods')||t.closest('#tune')||t.closest('#ov')||t.closest('#tuneBtn')));
 
@@ -724,19 +611,13 @@ function moveFlick(g,x,y,now){
   const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/Math.max(200,P.pwv)));
   if(S.sel>=0){
     const dir=(Math.sign(dx)||1)*(FLIP()?-1:1);
-    // l'inclinaison de la chiquenaude choisit la zone : à plat, angle haut, angle bas
-    const rat=dy/Math.max(1,Math.abs(dx));
-    let z = rat>0.28 ? 1 : rat<-0.28 ? -1 : 0;
-    if(FLIP()) z=-z;
-    fireKick(S.sel,dir,pw,z);
-    if(!isHost()) send({k:[S.sel,dir,pw,z]});
-    S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),zone:z,ms:Date.now()-S.t0});
+    swing(S.sel,dir,pw);
+    if(!isHost()) send({k:[S.sel,dir,pw]});
     powBar.style.width=(pw*100).toFixed(0)+'%';
     setTimeout(()=>powBar.style.width='0%',350);
   }
   g.fired=true; Gf=null;
 }
-
 addEventListener('pointermove',e=>{
   const now=performance.now(), x=e.clientX, y=e.clientY;
   for(const g of [Gs,Gf]){
@@ -752,15 +633,14 @@ addEventListener('pointermove',e=>{
   if(Gf&&Gf.id===e.pointerId) Gf=null;
 },{passive:false}));
 
-/* ------------------------------ UI ------------------------------- */
+/* -------------------------------- UI ----------------------------- */
 function buildRods(){
   const host=document.getElementById('rods'); host.innerHTML='';
-  if(S.phase!=='play'){ return; }
+  if(S.phase!=='play') return;
   const list=MYRODS(S.me).slice(); if(FLIP()) list.reverse();
-  const b=S.ball;
   for(const ri of list){
     const r=RODS[ri], el=document.createElement('button');
-    el.className='rodbtn t'+r.team+(ri===S.sel?' on':'')+((b.trap&&b.trap.ri===ri)?' has':'');
+    el.className='rodbtn t'+r.team+(ri===S.sel?' on':'');
     el.innerHTML='<span class="lab">'+r.kind+'</span>'+KN[r.kind];
     el.onpointerdown=ev=>{ev.stopPropagation();S.auto=false;saveAuto();S.sel=ri;buildRods();};
     host.appendChild(el);
@@ -770,29 +650,28 @@ function buildRods(){
   a.innerHTML='<b>AUTO</b>'+(S.auto?'activé':'manuel');
   a.onpointerdown=ev=>{ev.stopPropagation();S.auto=!S.auto;saveAuto();buildRods();};
   host.appendChild(a);
-  resize();          // la gouttière dépend de la largeur réelle de la colonne
+  resize();
 }
-function saveAuto(){ try{localStorage.setItem('bf4_auto',S.auto?'1':'0');}catch(e){} }
-try{ S.auto=localStorage.getItem('bf4_auto')==='1'; }catch(e){}
+function saveAuto(){ try{localStorage.setItem('bf6_auto',S.auto?'1':'0');}catch(e){} }
+try{ S.auto=localStorage.getItem('bf6_auto')==='1'; }catch(e){}
+
+function chrome(){
+  const playing = S.phase==='play'||S.phase==='pause';
+  document.getElementById('tuneBtn').style.display = playing ? 'none' : '';
+  document.getElementById('hint').style.display = playing ? '' : 'none';
+  if(playing) document.getElementById('tune').classList.remove('on');
+}
 let bstate='';
 setInterval(()=>{
   chrome();
   if(S.phase!=='play') return;
-  const b=S.ball, k=S.sel+'|'+(b.trap?b.trap.ri:-1)+'|'+S.auto;
+  const k=S.sel+'|'+S.auto;
   if(k!==bstate){ bstate=k; buildRods(); }
   if(NET.mode!=='off'&&NET.up&&performance.now()-NET.lastRx>4000){
     NET.up=false; NET.err='Connexion perdue.'; S.phase='menu'; overlay();
   }
 },120);
 
-// les réglages ne sont accessibles qu'en dehors du jeu : au menu et sur
-// l'écran de fin de match, c'est-à-dire au moment où l'on règle entre deux binômes
-function chrome(){
-  const playing = S.phase==='play'||S.phase==='pause'||S.phase==='goal';
-  document.getElementById('tuneBtn').style.display = playing ? 'none' : '';
-  document.getElementById('hint').style.display = playing ? '' : 'none';
-  if(playing) document.getElementById('tune').classList.remove('on');
-}
 function fs(){ const e=document.documentElement;
   if(e.requestFullscreen) e.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
   if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
@@ -808,22 +687,18 @@ function overlay(){
   if(S.phase==='menu'){
     show('Babyfoot',
      'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
-     'L\'écran est coupé en deux : <b>moitié gauche, glisser ↕</b> pour placer la barre · '+
-     '<b>moitié droite, claquer ↔</b> pour frapper. Un pouce de chaque côté, en même temps.<br>'+
-     'Les <b>boutons de gauche</b> changent de barre — ou <b>AUTO</b> pour qu\'elle se choisisse seule.<br>'+
-     'Le pied a une <b>portée</b>. Toucher un homme, c\'est lui donner la balle — viser les '+
-     '<b>intervalles entre figurines</b> est tout le jeu. '+
-     'La balle <b>hérite du mouvement de ta barre</b> : coulisser puis claquer, c\'est le tir tiré.<br>'+
-     'Balle au pied, l\'angle se choisit <b>dans la chiquenaude</b> : à plat pour tirer droit, '+
-     'en diagonale haute ou basse pour prendre l\'angle. Les trois options sont affichées. '+
-     'La <b>vitesse du geste</b> donne la puissance. Aucun rebond n\'est jamais prédit.'+err,
+     'La figurine est un <b>pendule</b> : elle pend au repos — c\'est la position de blocage — '+
+     'et la chiquenaude ne fait que lui donner de l\'élan. Elle frappe la balle où qu\'elle soit '+
+     'sur son arc, puis retombe. <b>Trop haute, elle laisse passer la balle dessous.</b><br><br>'+
+     'Écran coupé en deux : <b>moitié gauche, glisser ↕</b> pour coulisser · '+
+     '<b>moitié droite, claquer ↔</b> pour lancer la rotation, la vitesse du geste donne l\'élan. '+
+     'Le pied <b>adhère</b> : balance la barre pour aller chercher une balle sur le côté, '+
+     'elle suit et s\'arrête avec toi.'+err,
      [['Solo',()=>{fs();NET.mode='off';S.me=0;newMatch(false);},true],
       ['Créer une partie',()=>{fs();doHost();}],
       ['Rejoindre',()=>{fs();S.phase='code';overlay();}]]);
   } else if(S.phase==='code'){
     T.textContent='Rejoindre'; B.innerHTML='';
-    // un vrai <form> : la touche Entrée du clavier mobile valide, sans avoir
-    // à replier le clavier pour atteindre le bouton
     Pp.innerHTML='Entre le code affiché sur l\'autre téléphone.'+
       '<br><form id="codef" style="margin-top:.6rem"><input id="codein" maxlength="4" '+
       'inputmode="text" enterkeyhint="go" autocapitalize="characters" autocomplete="one-time-code" '+
@@ -832,9 +707,8 @@ function overlay(){
     const go=()=>{const v=(i.value||'').toUpperCase().trim(); if(v.length===4){ i.blur(); doJoin(v); }};
     document.getElementById('codef').onsubmit=e=>{e.preventDefault();go();};
     i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
-                    if(i.value.length>=4) setTimeout(go,10); };   // 4 caractères suffisent
-    const b=document.createElement('button'); b.className='bigbtn pri'; b.textContent='Connexion';
-    b.onclick=go;
+                    if(i.value.length>=4) setTimeout(go,10); };
+    const b=document.createElement('button'); b.className='bigbtn pri'; b.textContent='Connexion'; b.onclick=go;
     const c=document.createElement('button'); c.className='bigbtn'; c.textContent='Retour';
     c.onclick=()=>{S.phase='menu';overlay();};
     B.appendChild(b); B.appendChild(c); ov.classList.add('on'); chrome();
@@ -856,44 +730,40 @@ function overlay(){
         if(isHost()) newMatch(true); else send({rm:1});}],
       ['Arrêter',()=>{S.log.push({t:'stop',chain:S.chain});save();
         if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;S.phase='menu';overlay();}]]);
-  } else ov.classList.remove('on');
+  } else { ov.classList.remove('on'); chrome(); }
 }
 
 /* ---------------------------- journal ---------------------------- */
-function save(){ try{localStorage.setItem('bf3_log',JSON.stringify(S.log.slice(-600)));}catch(e){} }
+function save(){ try{localStorage.setItem('bf6_log',JSON.stringify(S.log.slice(-600)));}catch(e){} }
 document.getElementById('dumpBtn').onclick=()=>{
-  const f=S.log.filter(e=>e.t==='flick'), k=S.log.filter(e=>e.t==='kick'&&e.team===S.me);
-  const miss=Math.max(0,f.length-k.length);
-  const traps=S.log.filter(e=>e.t==='trap'&&e.team===S.me);
-  const pass=traps.filter(e=>e.from===S.me).length;
-  const susp=f.filter(e=>e.suspect).length;   // ~0 depuis la séparation de l'écran
+  const sw=S.log.filter(e=>e.t==='swing'&&e.team===S.me);
+  const rev=S.log.filter(e=>e.t==='revive');
   const rem=S.log.filter(e=>e.t==='rematch').length;
   const fg=S.log.filter(e=>e.t==='firstgoal').map(e=>(e.ms/1000).toFixed(0)+'s').join(' ');
+  const gl=S.log.filter(e=>e.t==='goal');
   document.getElementById('logout').value=
-    'chiquenaudes '+f.length+'  |  dans le vide '+miss+' ('+(f.length?(100*miss/f.length).toFixed(0):0)+'%)\n'+
-    'accidentelles '+susp+' ('+(f.length?(100*susp/f.length).toFixed(1):0)+'%)\n'+
-    'contrôles '+traps.length+'  dont passes réussies '+pass+'\n'+
+    'chiquenaudes '+sw.length+'  |  buts '+gl.length+'\n'+
+    'balles mortes relancées '+rev.length+'\n'+
     'revanches '+rem+'  |  1er but: '+(fg||'—')+'\n\n'+JSON.stringify(S.log.slice(-25));
 };
 
 /* ---------------------------- réglages --------------------------- */
-const KEYS=['ctrl','trap','carry','reach','wall','fric','figr','pow','spr','crn','roll','pwv','slew','stall','ast','ai','trv','win'];
-const INT={trap:1,reach:1,pow:1,slew:1,trv:1,win:1,pwv:1};
+const KEYS=['lf','omax','grav','adamp','grip','figr','crn','wall','fric','vmax','slew','stall','ast','ai','trv','win','pwv'];
+const INT={lf:1,omax:1,vmax:1,slew:1,trv:1,win:1,pwv:1};
 function syncTune(){
   KEYS.forEach(k=>{
     const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
-    const CTRLN=['jamais','toujours','selon la vitesse'];
-    const fmt=v=>k==='ctrl'?CTRLN[v]:(INT[k]?v:(+v).toFixed(2));
+    const fmt=v=>INT[k]?v:(+v).toFixed(2);
     i.value=P[k]; o.textContent=fmt(P[k]);
     i.oninput=()=>{P[k]=+i.value;o.textContent=fmt(P[k]);
-      try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}
-      // les deux joueurs règlent : l'hôte diffuse, l'invité demande
+      try{localStorage.setItem('bf6_tune',JSON.stringify(P));}catch(e){}
       if(NET.mode==='host') sendCfg(); else if(NET.mode==='guest') send({cf:[k,+i.value]});};
   });
 }
 document.getElementById('tuneBtn').onclick=()=>document.getElementById('tune').classList.toggle('on');
 document.getElementById('resetBtn').onclick=()=>{P=Object.assign({},DEF);syncTune();
-  try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}};
+  try{localStorage.setItem('bf6_tune',JSON.stringify(P));}catch(e){}
+  if(NET.mode==='host') sendCfg();};
 document.getElementById('menuBtn').onclick=()=>{
   document.getElementById('tune').classList.remove('on');
   if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;

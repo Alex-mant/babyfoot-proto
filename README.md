@@ -54,49 +54,47 @@ Chaque joueur voit la table depuis son propre côté : la vue de l'invité est
 pivotée de 180°, donc les gestes restent absolus pour chacun et les deux
 attaquent vers la droite de leur écran.
 
-## Les mécaniques
+## La physique
 
-**La portée.** Le pied ne touche la balle que si elle est réellement à sa portée.
-Claquer plus loin tape dans le vide — c'est ce qui empêche un gardien de frapper
-une balle à l'autre bout de la table.
+L'objectif est de reproduire fidèlement une vraie table, pas d'approcher sa
+sensation avec des raccourcis.
 
-**Le contrôle de balle**, réglable en trois régimes. Un simple seuil de vitesse
-rendait le collage imprévisible : on ne savait pas pourquoi ça avait collé cette
-fois et pas la précédente, donc on n'apprenait rien.
+**La figurine est un pendule.** La barre a deux degrés de liberté : elle coulisse
+le long de son axe et elle **tourne** autour. Au repos la figurine pend sous son
+propre poids — c'est la position de blocage. La chiquenaude ne fait qu'une chose :
+lui donner de la vitesse angulaire. Elle décrit alors son arc, frappe la balle où
+qu'elle la rencontre, et retombe.
 
-| Régime | Comportement |
+Rien n'est appliqué à la balle : elle est frappée quand le pied arrive dessus, à
+la vitesse qu'a ce pied à cet instant. Tout le reste en découle sans paramètre
+inventé.
+
+| Ce qui était un paramètre | Ce qui le remplace |
 |---|---|
-| **toujours** (défaut) | tout contact bloque la balle. Toucher un homme, c'est lui donner la balle ; viser les intervalles devient tout le jeu |
-| jamais | aucun collage, physique pure |
-| selon la vitesse | sous le seuil ça bloque, au-dessus ça rebondit |
+| une « portée » en millimètres | la géométrie du pied et la longueur de la figurine |
+| une puissance de tir | la vitesse du bout du pied, soit `longueur × vitesse angulaire` |
+| un collage binaire de la balle | l'adhérence tangentielle du pied |
 
-Les intervalles laissent passer la balle partout : 76 mm aux demis, 141 mm à
-l'attaque, 186 mm en défense, pour une balle de 35 mm.
+**Une figurine trop haute laisse passer la balle dessous.** La hauteur du pied
+vaut `L(1 − cos θ)` ; au-delà du diamètre de la balle, il n'y a plus de contact.
+C'est ce qui rend le tour complet coûteux — et le tour complet est de toute façon
+borné à ±180°, comme la roulette est interdite en compétition.
 
-**L'angle se choisit, il ne se subit pas.** Balle tenue, la balle est collée : le
-glissement ne sert qu'à se placer en travers du terrain. L'angle vient de
-l'inclinaison de la chiquenaude — trois zones franches, un seul geste. Tant que
-la balle est tenue, les trois options sont affichées en éventail.
-
-Auparavant l'angle dérivait comme effet de bord du déplacement de la barre :
-impossible à maîtriser, puisqu'on ne le choisissait pas.
+**L'adhérence.** Au contact, la vitesse relative balle/pied est décomposée : le
+choc normal fait rebondir, le frottement tangentiel entraîne. C'est ce qui permet
+de balancer la barre pour aller chercher une balle sur le côté : elle suit le
+pied, et quand la barre s'arrête, la balle s'arrête avec elle. Sans jamais être
+collée.
 
 **Le pied plat à angles arrondis.** Un disque dévie toujours le long du rayon,
 donc rien n'est jamais franchement droit. Le rectangle à angles arrondis donne
-une face plate qui renvoie droit et des angles qui ouvrent les diagonales. Le
-rayon d'arrondi est réglable : petit = très binaire, grand = retour vers le disque.
-
-**Le report de la barre sur la balle.** La figurine est un corps cinématique :
-une barre qui coulisse pousse la balle libre, et au tir la balle hérite de la
-vitesse latérale de la barre. Coulisser puis claquer pendant le mouvement, c'est
-le tir tiré.
+une face plate qui renvoie droit et des angles qui ouvrent les diagonales.
 
 **La balle morte.** Immobile plus de 2,5 s, elle roule doucement vers une
-figurine, assez lentement pour être contrôlée à l'arrivée. Derrière une barre de
-défense, elle revient **obligatoirement à l'équipe qui défend ce but** — sinon
-l'adversaire hérite d'une balle devant un but dégarni alors que le défenseur
-aurait dû la récupérer. C'est la règle ITSF de la balle morte entre le but et la
-barre de 2.
+figurine. Derrière une barre de défense, elle revient **obligatoirement à l'équipe
+qui défend ce but** — sinon l'adversaire hérite d'une balle devant un but dégarni
+alors que le défenseur aurait dû la récupérer. C'est la règle ITSF de la balle
+morte entre le but et la barre de 2.
 
 Elle est nécessaire : la géométrie a de vraies zones mortes. Le gardien couvre
 y 230–450 et la défense 110–570, donc une balle sous y = 110 près du fond n'est
@@ -116,17 +114,19 @@ la balle laisse une traînée.
 
 ## Régler
 
-Bouton **RÉG**. Ne change **qu'un seul paramètre entre deux binômes**, sinon tu
-ne sauras pas lequel a fait quoi.
+Bouton **RÉG**, visible au menu et sur l'écran de fin de match — donc au moment
+où l'on règle entre deux binômes. Ne change **qu'un seul paramètre à la fois**,
+sinon tu ne sauras pas lequel a fait quoi.
 
 | Ordre | Réglage | Ce qu'il décide |
 |---|---|---|
-| 1 | Vitesse pour puissance max | si la puissance est un vrai curseur sous le pouce ou un interrupteur tout-ou-rien |
-| 2 | Contrôle de balle | le régime de collage, donc tout le rythme des échanges |
-| 3 | Puissance max | la vitesse de la balle. À 4600 mm/s elle traversait la table en 260 ms, sous le temps de réaction humain : injouable |
-| 4 | Restitution des murs | la profondeur des bandes. Sans prévisualisation, un rebond qui semble arbitraire est un rebond dont on n'apprend rien |
-| 5 | Arrondi des angles | la zone plate contre les diagonales |
-| 6 | Portée du pied | si on tape trop souvent dans le vide, ou si ça accroche tout |
+| 1 | Vitesse angulaire max | la puissance des tirs, puisque la balle part à la vitesse du pied |
+| 2 | Longueur de la figurine | la portée, la hauteur à laquelle elle se lève, et la vitesse du pied à angle égal |
+| 3 | Adhérence du pied | si l'on peut mener la balle ou si elle fuit |
+| 4 | Amortissement rotation | le temps que met la figurine à retomber en position de blocage |
+| 5 | Pesanteur | la vivacité du rappel. À 1, c'est la pesanteur réelle |
+| 6 | Restitution des bandes | la profondeur des bandes. Sans prévisualisation, un rebond qui semble arbitraire est un rebond dont on n'apprend rien |
+| 7 | Vitesse pour puissance max | si l'élan est un vrai curseur sous le pouce ou un interrupteur tout-ou-rien |
 
 ## Mesurer
 
