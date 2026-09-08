@@ -110,7 +110,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   <div class="tr"><label>Vitesse de coulissement (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
   <div class="tr"><label>Délai balle morte (s)</label><output id="o_stall"></output><input type="range" id="i_stall" min="0.8" max="6" step="0.1"></div>
   <div class="tr"><label>Suivi auto des barres libres — 0 = aucun</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
-  <div class="tr"><label>Niveau de l'IA (solo)</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.15" max="1" step="0.05"></div>
+  <div class="tr"><label>Niveau de l'IA (solo) — temps de réaction</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.05" max="1" step="0.05"></div>
   <div class="btns" style="margin:.5rem 0 .4rem">
     <button class="bigbtn" id="dumpBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Journal</button>
     <button class="bigbtn" id="resetBtn" style="min-width:0;font-size:.75rem;padding:.35rem .7rem">Défauts</button>
@@ -162,7 +162,7 @@ const DEF={
   lf:95, omax:22, grav:1, zeta:1.0, thsens:0.022,
   grip:0.55, figr:0.22, crn:4,
   wall:0.70, fric:0.90, vmax:2600, slew:1500,
-  stall:3.0, ast:0, ai:0.55,
+  stall:3.0, ast:0, ai:0.45,
 };
 let P=Object.assign({},DEF);
 try{const t=localStorage.getItem('bf8_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
@@ -170,7 +170,7 @@ try{const t=localStorage.getItem('bf8_tune'); if(t)P=Object.assign(P,JSON.parse(
 const S={
   phase:'menu', score:[0,0], me:0, sel:-1,
   ball:{x:W/2,y:H/2,vx:0,vy:0},
-  flash:0, trail:[], serveTo:1, stall:0,
+  flash:0, trail:[], serveTo:1, stall:0, aiMem:[],
   matchN:0, chain:0, t0:0, firstGoalMs:null, log:[], auto:false,
 };
 const NET={mode:'off', peer:null, conn:null, code:'', up:false, lastRx:0, err:''};
@@ -333,26 +333,44 @@ function revive(){
 /* -------------------------------- IA ----------------------------- */
 function ai(dt,now){
   const foe=S.me^1, b=S.ball;
+
+  // UNE SEULE barre agit, celle qui est la plus proche de la balle. Faire
+  // suivre les quatre en même temps n'est pas jouable par un humain, qui n'en
+  // tient qu'une : c'est ce qui rendait l'IA imbattable, d'autant plus depuis
+  // que chaque barre balaie toute la largeur.
+  let act=-1, bd=Infinity;
+  for(const ri of MYRODS(foe)){ const d=Math.abs(b.x-RODS[ri].x); if(d<bd){bd=d;act=ri;} }
+
+  // Temps de réaction : l'IA vise la balle telle qu'elle l'a perçue il y a
+  // un instant, pas telle qu'elle est. C'est le vrai curseur de difficulté.
+  const lag=60+(1-P.ai)*400;
+  S.aiMem.push({t:now,x:b.x,y:b.y,vx:b.vx,vy:b.vy});
+  while(S.aiMem.length>2 && now-S.aiMem[0].t>800) S.aiMem.shift();
+  const m=S.aiMem.find(q=>now-q.t<=lag)||S.aiMem[0];
+
   for(const ri of MYRODS(foe)){
     const r=RODS[ri];
-    if(now-r.aiT>260-160*P.ai){
-      r.aiT=now;
-      let ty=b.y;
-      if(Math.abs(b.vx)>60){ const tt=Math.max(0,Math.min(.5,(r.x-b.x)/b.vx)); ty=b.y+b.vy*tt; }
-      ty=Math.max(0,Math.min(H,ty));
-      let fi=0,bd=Infinity;
-      for(let i=0;i<r.n;i++){const d=Math.abs(ty-figY(r,i)); if(d<bd){bd=d;fi=i;}}
-      r.aiT2=Math.max(-r.span,Math.min(r.span,r.off+(ty-figY(r,fi))));
-    }
-    const d=r.aiT2-r.off;
-    r.tgt=r.off+Math.sign(d)*Math.min(Math.abs(d),P.slew*P.ai*dt);
-    // rotation : arme quand la balle entre dans l'arc du pied, sinon bloque
     r.held=true;
+    if(ri!==act){                       // les autres reviennent au repos et bloquent
+      r.tgt += (0-r.tgt)*Math.min(1,1.5*dt);
+      r.thTgt = 0;
+      continue;
+    }
+    let ty=m.y;
+    if(Math.abs(m.vx)>60){ const tt=Math.max(0,Math.min(.5,(r.x-m.x)/m.vx)); ty=m.y+m.vy*tt; }
+    ty=Math.max(0,Math.min(H,ty));
+    let fi=0,fd=Infinity;
+    for(let i=0;i<r.n;i++){const d=Math.abs(ty-figY(r,i)); if(d<fd){fd=d;fi=i;}}
+    const want=Math.max(-r.span,Math.min(r.span,r.off+(ty-figY(r,fi))));
+    const d2=want-r.off;
+    r.tgt=r.off+Math.sign(d2)*Math.min(Math.abs(d2),P.slew*P.ai*dt);
+
+    // frappe seulement une balle à portée qui ne s'enfuit pas
     let near=Infinity;
     for(let i=0;i<r.n;i++) near=Math.min(near,Math.abs(b.y-figY(r,i)));
     const ahead=(b.x-r.x)*DIR(foe);
-    const strike = near<FHY+BR+8 && ahead>-(FHX+BR+6) && ahead<P.lf*0.9;
-    r.thTgt = strike ? DIR(foe)*1.15 : 0;
+    const venant=b.vx*DIR(foe) < 60;
+    r.thTgt = (near<FHY+BR && ahead>-(FHX+BR) && ahead<P.lf*0.8 && venant) ? DIR(foe) : 0;
   }
 }
 function assist(dt){
@@ -420,6 +438,7 @@ function serve(team){
 function newMatch(keep){
   S.score=[0,0]; S.matchN++; S.firstGoalMs=null; S.t0=Date.now();
   if(!keep) S.chain=0;
+  S.aiMem.length=0;
   RODS.forEach(r=>{r.off=0;r.tgt=0;r.th=0;r.om=0;});
   S.serveTo = (S.matchN===1) ? (Math.random()<0.5?0:1) : (S.serveTo^1);
   serve(S.serveTo);

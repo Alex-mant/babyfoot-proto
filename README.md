@@ -127,6 +127,23 @@ Elle est nécessaire : la géométrie a de vraies zones mortes. Le gardien couvr
 y 230–450 et la défense 110–570, donc une balle sous y = 110 près du fond n'est
 atteignable par personne.
 
+## L'IA (solo)
+
+Elle ne pilote qu'**une seule barre à la fois**, celle qui est la plus proche de
+la balle — les autres reviennent au repos. Faire suivre les quatre barres en même
+temps n'est pas jouable par un humain, qui n'en tient qu'une : c'est ce qui la
+rendait imbattable, d'autant plus depuis que chaque barre balaie toute la largeur.
+
+Son niveau est un **temps de réaction**, pas une précision : elle vise la balle
+telle qu'elle l'a perçue il y a un instant. Elle ne frappe pas non plus une balle
+qui s'éloigne d'elle.
+
+| Niveau | Réaction | Vitesse de barre (humain : 1500) |
+|---|---|---|
+| 0,05 | 440 ms | 75 mm/s |
+| 0,45 (défaut) | 280 ms | 675 mm/s |
+| 1,00 | 60 ms | 1500 mm/s |
+
 ## Prévisualisation
 
 Les traits pointillés montrent la **direction** du tir, et rien d'autre. Aucun
