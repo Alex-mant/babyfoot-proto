@@ -141,14 +141,18 @@ const G=9810;                  // pesanteur, mm/s²
 // entre son gardien et l'attaque adverse.
 const RODS=[
   {x:  75,team:0,n:1,sp:  0,span:110,kind:'G'},
-  {x: 225,team:0,n:2,sp:230,span:115,kind:'D'},
-  {x: 375,team:1,n:3,sp:185,span: 92,kind:'A'},
-  {x: 525,team:0,n:5,sp:120,span: 60,kind:'M'},
-  {x: 675,team:1,n:5,sp:120,span: 60,kind:'M'},
-  {x: 825,team:0,n:3,sp:185,span: 92,kind:'A'},
-  {x: 975,team:1,n:2,sp:230,span:115,kind:'D'},
+  {x: 225,team:0,n:2,sp:230,span:205,kind:'D'},
+  {x: 375,team:1,n:3,sp:185,span:135,kind:'A'},
+  {x: 525,team:0,n:5,sp:120,span: 80,kind:'M'},
+  {x: 675,team:1,n:5,sp:120,span: 80,kind:'M'},
+  {x: 825,team:0,n:3,sp:185,span:135,kind:'A'},
+  {x: 975,team:1,n:2,sp:230,span:205,kind:'D'},
   {x:1125,team:1,n:1,sp:  0,span:110,kind:'G'},
 ];
+// Course calculée pour que la figurine extrême affleure la bande :
+// span = H/2 - (n-1)*sp/2 - FHY. Défense, demis et attaque balaient donc
+// toute la largeur. Seul le gardien reste bridé : il n'a que la largeur
+// du but à couvrir, et sa course le garde devant sa cage.
 const KN={G:'gardien',D:'défense',M:'demis',A:'attaque'};
 const DIR=t=>t===0?1:-1;
 const T0=[0,1,3,5], T1=[2,4,6,7];

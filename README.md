@@ -58,6 +58,13 @@ attaquent vers la droite de leur écran.
 L'objectif est de reproduire fidèlement une vraie table, pas d'approcher sa
 sensation avec des raccourcis.
 
+**Les courses.** Défense, demis et attaque balaient toute la largeur : la course
+de chaque barre est calculée pour que la figurine extrême affleure la bande,
+`span = H/2 − (n−1)·espacement/2 − demi-hauteur du pied`. Seul le gardien reste
+bridé — il n'a que la largeur du but à couvrir (210–470 pour un but de 240–440).
+
+Sans ça il restait plus de 100 mm morts le long de chaque bande latérale.
+
 **Les proportions.** La figurine mesure 95 mm de l'axe de la barre au pied,
 comme un vrai homme de babyfoot (~110 mm de haut, barre au sommet). Ce n'est pas
 un détail : avec une figurine deux fois trop courte, les zones d'atteinte des
