@@ -468,13 +468,16 @@ function serve(team){
   }
   S.holdT=0; S.trail.length=0; S.last=team;
   if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
-  S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on');
+  S.phase='play'; buildRods(); document.getElementById('ov').classList.remove('on'); chrome();
 }
 function newMatch(keep){
   S.score=[0,0]; S.matchN++; S.firstGoalMs=null; S.t0=Date.now();
   if(!keep) S.chain=0;
   RODS.forEach(r=>{r.off=0;r.tgt=0;r.kick=null;});
-  S.serveTo^=1; serve(S.serveTo);
+  // le premier engagement est tiré au sort, ensuite il alterne : sans ça
+  // l'hôte engageait toujours le premier match
+  S.serveTo = (S.matchN===1) ? (Math.random()<0.5?0:1) : (S.serveTo^1);
+  serve(S.serveTo);
 }
 
 /* ------------------------------ réseau --------------------------- */
@@ -485,7 +488,8 @@ function netTick(){
   if(NET.mode==='host'){
     send({s:1, b:[Math.round(b.x*4)/4,Math.round(b.y*4)/4,Math.round(b.vx),Math.round(b.vy)],
           tr:b.trap?[b.trap.ri,b.trap.fi,Math.round(b.trap.off*4)/4,b.trap.side]:0,
-          r:RODS.map(r=>Math.round(r.off*4)/4), sc:S.score, p:S.phase});
+          r:RODS.map(r=>Math.round(r.off*4)/4), sc:S.score, p:S.phase,
+          m:S.matchN, ch:S.chain});
   } else {
     send({i:1, t:MYRODS(1).map(ri=>Math.round(RODS[ri].tgt*4)/4)});
   }
@@ -501,6 +505,14 @@ function onMsg(d){
       r.off=d.r[i]; r.tgt=d.r[i];
     }
     S.score=d.sc;
+    if(d.ch!==undefined) S.chain=d.ch;
+    if(d.m!==undefined && d.m!==S.matchN){
+      // même remise à zéro que newMatch() chez l'hôte : sans ça les barres de
+      // l'invité repartaient à leur ancienne position et son chrono ne
+      // redémarrait jamais, faussant le temps jusqu'au premier but
+      S.matchN=d.m; S.t0=Date.now(); S.firstGoalMs=null;
+      for(const ri of MYRODS(S.me)){ const r=RODS[ri]; r.off=0; r.tgt=0; r.kick=null; }
+    }
     if(d.p!==S.phase){
       S.phase=d.p;
       if(d.p==='play'){ if(S.sel<0||RODS[S.sel].team!==S.me) S.sel=RODS.findIndex(q=>q.team===S.me&&q.kind==='M');
@@ -509,14 +521,18 @@ function onMsg(d){
     }
   } else if(d.i){                            // entrées venues de l'invité
     MYRODS(1).forEach((ri,k)=>{ RODS[ri].tgt=d.t[k]; });
-  } else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2],d.k[3]|0); }
-  else if(d.rm){ if(NET.mode==='host'){ S.chain++; newMatch(true); } }
+  } else if(d.cfg){ Object.assign(P,d.cfg); syncTune(); }
+  else if(d.cf){ if(NET.mode==='host'){ P[d.cf[0]]=+d.cf[1]; syncTune(); sendCfg(); } }
+  else if(d.k){ fireKick(d.k[0],d.k[1],d.k[2],d.k[3]|0); }
+  else if(d.rm){ if(NET.mode==='host'){ S.chain++; S.log.push({t:'rematch',chain:S.chain}); save(); newMatch(true); } }
   else if(d.p==='end'){ S.phase='end'; S.score=d.sc||S.score; overlay(); }
 }
+function sendCfg(){ if(NET.mode==='host') send({cfg:P}); }
 function wire(c){
   NET.conn=c;
   c.on('open',()=>{ NET.up=true; NET.lastRx=performance.now();
-    if(NET.mode==='host'){ S.me=0; newMatch(false); } else { S.me=1; S.phase='wait'; overlay(); } });
+    if(NET.mode==='host'){ S.me=0; sendCfg(); newMatch(false); }
+    else { S.me=1; S.phase='wait'; overlay(); } });
   c.on('data',onMsg);
   c.on('close',()=>{ NET.up=false; NET.err='Connexion fermée.'; S.phase='menu'; overlay(); });
   c.on('error',()=>{ NET.up=false; NET.err='Erreur de connexion.'; S.phase='menu'; overlay(); });
@@ -744,6 +760,7 @@ function saveAuto(){ try{localStorage.setItem('bf4_auto',S.auto?'1':'0');}catch(
 try{ S.auto=localStorage.getItem('bf4_auto')==='1'; }catch(e){}
 let bstate='';
 setInterval(()=>{
+  chrome();
   if(S.phase!=='play') return;
   const b=S.ball, k=S.sel+'|'+(b.trap?b.trap.ri:-1)+'|'+S.auto;
   if(k!==bstate){ bstate=k; buildRods(); }
@@ -752,6 +769,13 @@ setInterval(()=>{
   }
 },120);
 
+// les réglages ne sont accessibles qu'en dehors du jeu : au menu et sur
+// l'écran de fin de match, c'est-à-dire au moment où l'on règle entre deux binômes
+function chrome(){
+  const playing = S.phase==='play'||S.phase==='pause'||S.phase==='goal';
+  document.getElementById('tuneBtn').style.display = playing ? 'none' : '';
+  if(playing) document.getElementById('tune').classList.remove('on');
+}
 function fs(){ const e=document.documentElement;
   if(e.requestFullscreen) e.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
   if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
@@ -762,7 +786,7 @@ function overlay(){
   const show=(t,p,btns)=>{ T.textContent=t; Pp.innerHTML=p; B.innerHTML='';
     (btns||[]).forEach(([l,f,pri])=>{const b=document.createElement('button');
       b.className='bigbtn'+(pri?' pri':'');b.textContent=l;b.onclick=f;B.appendChild(b);});
-    ov.classList.add('on'); buildRods(); };
+    ov.classList.add('on'); buildRods(); chrome(); };
   const err=NET.err?'<br><br><b style="color:#D65445">'+NET.err+'</b>':'';
   if(S.phase==='menu'){
     show('Babyfoot',
@@ -781,13 +805,23 @@ function overlay(){
       ['Rejoindre',()=>{fs();S.phase='code';overlay();}]]);
   } else if(S.phase==='code'){
     T.textContent='Rejoindre'; B.innerHTML='';
-    Pp.innerHTML='Entre le code affiché sur l\'autre téléphone.<br><input id="codein" maxlength="4" autocapitalize="characters" autocomplete="off">';
+    // un vrai <form> : la touche Entrée du clavier mobile valide, sans avoir
+    // à replier le clavier pour atteindre le bouton
+    Pp.innerHTML='Entre le code affiché sur l\'autre téléphone.'+
+      '<br><form id="codef" style="margin-top:.6rem"><input id="codein" maxlength="4" '+
+      'inputmode="text" enterkeyhint="go" autocapitalize="characters" autocomplete="one-time-code" '+
+      'autocorrect="off" spellcheck="false"></form>';
+    const i=document.getElementById('codein');
+    const go=()=>{const v=(i.value||'').toUpperCase().trim(); if(v.length===4){ i.blur(); doJoin(v); }};
+    document.getElementById('codef').onsubmit=e=>{e.preventDefault();go();};
+    i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+                    if(i.value.length>=4) setTimeout(go,10); };   // 4 caractères suffisent
     const b=document.createElement('button'); b.className='bigbtn pri'; b.textContent='Connexion';
-    b.onclick=()=>{const v=(document.getElementById('codein').value||'').toUpperCase().trim(); if(v.length===4) doJoin(v);};
+    b.onclick=go;
     const c=document.createElement('button'); c.className='bigbtn'; c.textContent='Retour';
     c.onclick=()=>{S.phase='menu';overlay();};
-    B.appendChild(b); B.appendChild(c); ov.classList.add('on');
-    setTimeout(()=>{const i=document.getElementById('codein'); if(i) i.focus();},60);
+    B.appendChild(b); B.appendChild(c); ov.classList.add('on'); chrome();
+    setTimeout(()=>{ i.focus(); },60);
   } else if(S.phase==='hosting'){
     show('Ton code','Fais entrer ce code sur l\'autre téléphone.<div id="code">'+NET.code+'</div>'+
       'Les deux appareils doivent être sur un réseau qui autorise le pair-à-pair — le même Wi-Fi marche toujours.',
@@ -802,7 +836,7 @@ function overlay(){
     show((mine?'Tu gagnes':win+' gagne'), S.score[0]+' — '+S.score[1]+
       (S.firstGoalMs!==null?'<br>premier but à '+(S.firstGoalMs/1000).toFixed(0)+' s':''),
      [['Revanche',()=>{S.chain++;S.log.push({t:'rematch',chain:S.chain});save();
-        if(isHost()) newMatch(true); else { send({rm:1}); show('Revanche','Demandée. En attente de l\'hôte.',[]); }}],
+        if(isHost()) newMatch(true); else send({rm:1});}],
       ['Arrêter',()=>{S.log.push({t:'stop',chain:S.chain});save();
         if(NET.peer){try{NET.peer.destroy();}catch(e){}} NET.mode='off';NET.up=false;S.phase='menu';overlay();}]]);
   } else ov.classList.remove('on');
@@ -835,7 +869,9 @@ function syncTune(){
     const fmt=v=>k==='ctrl'?CTRLN[v]:(INT[k]?v:(+v).toFixed(2));
     i.value=P[k]; o.textContent=fmt(P[k]);
     i.oninput=()=>{P[k]=+i.value;o.textContent=fmt(P[k]);
-      try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}};
+      try{localStorage.setItem('bf4_tune',JSON.stringify(P));}catch(e){}
+      // les deux joueurs règlent : l'hôte diffuse, l'invité demande
+      if(NET.mode==='host') sendCfg(); else if(NET.mode==='guest') send({cf:[k,+i.value]});};
   });
 }
 document.getElementById('tuneBtn').onclick=()=>document.getElementById('tune').classList.toggle('on');
