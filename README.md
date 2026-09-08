@@ -93,6 +93,14 @@ vaut `L(1 − cos θ)` ; au-delà du diamètre de la balle, il n'y a plus de con
 C'est ce qui rend le tour complet coûteux — et le tour complet est de toute façon
 borné à ±180°, comme la roulette est interdite en compétition.
 
+**Le repos, c'est en bas.** Sur une vraie table les hommes pendent au repos, main
+posée ou non ; on ne les tient en haut que par une action délibérée et continue.
+Le modèle fait pareil : si le pouce ne bouge plus pendant 400 ms, la barre retombe
+en position de blocage. Sans ça, une sur-rotation laissait la barre levée — donc
+ne bloquant plus rien — sans moyen évident d'en sortir. La rotation est aussi
+bornée à 126° : au-delà le pied revient vers le centre en restant très haut, ce
+qui n'a aucun usage.
+
 **La main tient la poignée.** La rotation n'est pas une impulsion : le pouce
 donne l'angle en continu. La barre suit à la vitesse du poignet, s'arrête où l'on
 s'arrête — on peut donc **lever un homme et l'y garder**, ce qui était impossible
@@ -135,8 +143,9 @@ temps n'est pas jouable par un humain, qui n'en tient qu'une : c'est ce qui la
 rendait imbattable, d'autant plus depuis que chaque barre balaie toute la largeur.
 
 Son niveau est un **temps de réaction**, pas une précision : elle vise la balle
-telle qu'elle l'a perçue il y a un instant. Elle ne frappe pas non plus une balle
-qui s'éloigne d'elle.
+telle qu'elle l'a perçue il y a un instant. Elle ne frappe pas une balle qui
+s'éloigne d'elle, et sa **cadence de frappe est limitée** — un joueur ne mitraille
+pas : de 1,3 frappe par seconde au niveau le plus faible à 4 au plus fort.
 
 | Niveau | Réaction | Vitesse de barre (humain : 1500) |
 |---|---|---|

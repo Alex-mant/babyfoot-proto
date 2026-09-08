@@ -122,6 +122,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   <div class="tr"><label>Friction du tapis (/s)</label><output id="o_fric"></output><input type="range" id="i_fric" min="0.2" max="1.6" step="0.05"></div>
   <div class="tr"><label>Vitesse max de la balle (mm/s)</label><output id="o_vmax"></output><input type="range" id="i_vmax" min="1200" max="5000" step="50"></div>
   <div class="tr"><label>Vitesse de coulissement (mm/s)</label><output id="o_slew"></output><input type="range" id="i_slew" min="400" max="4500" step="50"></div>
+  <div class="tr"><label>Retour au blocage, pouce immobile (ms)</label><output id="o_idle"></output><input type="range" id="i_idle" min="150" max="1500" step="25"></div>
   <div class="tr"><label>Délai balle morte (s)</label><output id="o_stall"></output><input type="range" id="i_stall" min="0.8" max="6" step="0.1"></div>
   <div class="tr"><label>Suivi auto des barres libres — 0 = aucun</label><output id="o_ast"></output><input type="range" id="i_ast" min="0" max="1" step="0.05"></div>
   <div class="tr"><label>Niveau de l'IA (solo) — temps de réaction</label><output id="o_ai"></output><input type="range" id="i_ai" min="0.05" max="1" step="0.05"></div>
@@ -149,6 +150,8 @@ const W=1200, H=680, GY0=240, GY1=440;
 const BR=17.5;                 // rayon de la balle (35 mm, liège Bonzini)
 const FHX=9, FHY=20;           // demi-dimensions du pied
 const G=9810;                  // pesanteur, mm/s²
+const THMAX=2.2;               // rotation utile : au-delà le pied revient vers
+                               // le centre en restant très haut, sans usage
 
 // Ordre réel : G_r · D_r · A_b · M_r · M_b · A_r · D_b · G_b
 // Chaque équipe progresse vers le but adverse, sa défense toujours
@@ -176,7 +179,7 @@ const DEF={
   lf:95, omax:22, grav:1, zeta:1.0, thsens:0.022,
   grip:0.55, figr:0.22, crn:4,
   wall:0.70, fric:0.90, vmax:2600, slew:1500,
-  stall:3.0, ast:0, ai:0.45,
+  stall:3.0, ast:0, ai:0.45, idle:400,
 };
 let P=Object.assign({},DEF);
 try{const t=localStorage.getItem('bf8_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
@@ -188,7 +191,7 @@ const S={
   matchN:0, chain:0, t0:0, firstGoalMs:null, log:[], auto:false,
 };
 const NET={mode:'off', peer:null, conn:null, code:'', up:false, lastRx:0, err:''};
-RODS.forEach(r=>{r.off=0; r.tgt=0; r.vy=0; r.th=0; r.om=0; r.thTgt=0; r.held=false; r.aiT=0; r.aiT2=0;});
+RODS.forEach(r=>{r.off=0; r.tgt=0; r.vy=0; r.th=0; r.om=0; r.thTgt=0; r.held=false; r.aiT=0; r.aiT2=0; r.aiNext=0;});
 
 const isHost=()=>NET.mode==='host'||NET.mode==='off';
 const FLIP=()=>S.me===1;
@@ -384,7 +387,11 @@ function ai(dt,now){
     for(let i=0;i<r.n;i++) near=Math.min(near,Math.abs(b.y-figY(r,i)));
     const ahead=(b.x-r.x)*DIR(foe);
     const venant=b.vx*DIR(foe) < 60;
-    r.thTgt = (near<FHY+BR && ahead>-(FHX+BR) && ahead<P.lf*0.8 && venant) ? DIR(foe) : 0;
+    const veut = near<FHY+BR && ahead>-(FHX+BR) && ahead<P.lf*0.8 && venant;
+    // cadence de frappe : un joueur ne mitraille pas. Le délai suit le niveau,
+    // de 250 ms au plus fort à 800 ms au plus faible.
+    if(veut && now>=r.aiNext){ r.aiNext = now + 250 + (1-P.ai)*550; r.aiHit = now + 200; }
+    r.thTgt = (now < (r.aiHit||0)) ? DIR(foe) : 0;
   }
 }
 function assist(dt){
@@ -426,6 +433,11 @@ function loop(now){
       if(S.stall > (reachable()?P.stall*3:P.stall)){ revive(); S.stall=0; }
       if(res) goal(res==='g0'?0:1);
     }
+    // Pouce immobile : la barre retombe en position de blocage. Sur une vraie
+    // table les hommes pendent au repos ; on ne les tient en haut que par une
+    // action continue. Sans ça, une sur-rotation laissait la barre levée donc
+    // inutile, sans moyen évident d'en sortir.
+    if(Gf && now-Gf.lastMove > P.idle) release(Gf.ri);
     netAcc+=dr; if(netAcc>=1/60){ netAcc=0; netTick(); }
   } else acc=0;
   if(S.flash>0) S.flash=Math.max(0,S.flash-dr*1.5);
@@ -641,7 +653,7 @@ addEventListener('pointerdown',e=>{
   const g={id:e.pointerId,px:e.clientX,py:e.clientY,x0:e.clientX,
            ri:S.sel, th0:(RODS[S.sel]?RODS[S.sel].th:0)};
   if(e.clientX < innerWidth/2){ if(!Gs) Gs=g; }
-  else if(!Gf){ Gf=g; grab(S.sel); }
+  else if(!Gf){ g.lastMove=performance.now(); Gf=g; grab(S.sel); }
   e.preventDefault();
 },{passive:false});
 
@@ -662,8 +674,9 @@ function moveTurn(g,x){
   if(g.ri<0) return;
   const r=RODS[g.ri]; if(!r||r.team!==S.me) return;
   r.held=true;
-  r.thTgt=Math.max(-Math.PI,Math.min(Math.PI,
+  r.thTgt=Math.max(-THMAX,Math.min(THMAX,
           g.th0+(x-g.x0)*P.thsens*(FLIP()?-1:1)));
+  g.lastMove=performance.now();
 }
 addEventListener('pointermove',e=>{
   const x=e.clientX, y=e.clientY;
@@ -789,8 +802,8 @@ document.getElementById('dumpBtn').onclick=()=>{
 };
 
 /* ---------------------------- réglages --------------------------- */
-const KEYS=['lf','omax','thsens','grav','zeta','grip','figr','crn','wall','fric','vmax','slew','stall','ast','ai'];
-const INT={lf:1,omax:1,vmax:1,slew:1};
+const KEYS=['lf','omax','thsens','grav','zeta','grip','figr','crn','wall','fric','vmax','slew','stall','idle','ast','ai'];
+const INT={lf:1,omax:1,vmax:1,slew:1,idle:1};
 function syncTune(){
   KEYS.forEach(k=>{
     const i=document.getElementById('i_'+k),o=document.getElementById('o_'+k); if(!i) return;
