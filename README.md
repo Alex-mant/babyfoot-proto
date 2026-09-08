@@ -35,14 +35,20 @@ Match en 5 buts. Le score est incrusté en boules de compteur sur la traverse.
 
 ## Les contrôles
 
-| Geste | Effet |
-|---|---|
-| Colonne de gauche | sélectionner la barre — rangées dans leur ordre spatial sur le terrain |
-| **AUTO** | la barre se choisit seule. Elle ne se **déplace** jamais seule : toucher une barre à la main coupe le mode |
-| **Glisser ↕** n'importe où | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
-| **Claquer ↔** | frapper, vers la droite ou vers la gauche |
-| Inclinaison du claquement | choisit la zone du pied : à plat, angle haut, angle bas |
-| Vitesse du claquement | puissance du tir |
+L'écran est coupé en deux, un pouce de chaque côté. Les deux moitiés
+fonctionnent **en même temps** : on place et on frappe simultanément.
+
+| Zone | Geste | Effet |
+|---|---|---|
+| Colonne de gauche | toucher | sélectionner la barre — rangées dans leur ordre spatial sur le terrain |
+| Colonne de gauche | **AUTO** | la barre se choisit seule. Elle ne se **déplace** jamais seule : toucher une barre à la main coupe le mode |
+| **Moitié gauche** | glisser ↕ | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
+| **Moitié droite** | claquer ↔ | frapper |
+| Moitié droite | inclinaison du claquement | choisit la zone du pied : à plat, angle haut, angle bas |
+| Moitié droite | vitesse du claquement | puissance du tir |
+
+La séparation supprime tout départage de geste, donc le tir accidentel en
+plaçant — qui était la principale source de frustration — n'est plus possible.
 
 Chaque joueur voit la table depuis son propre côté : la vue de l'invité est
 pivotée de 180°, donc les gestes restent absolus pour chacun et les deux

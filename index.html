@@ -46,6 +46,10 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 .autobtn.on{color:var(--green);border-color:var(--green);background:rgba(79,177,131,.16)}
 
 #pow{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--green);z-index:4}
+#hint{position:absolute;left:0;right:0;bottom:calc(6px + env(safe-area-inset-bottom));z-index:2;
+  display:grid;grid-template-columns:1fr 1fr;justify-items:center;pointer-events:none}
+#hint span{font-family:var(--f-m);font-size:.6rem;font-weight:600;letter-spacing:.1em;
+  color:var(--ink-2);background:rgba(15,20,17,.78);padding:.2rem .55rem;border-radius:4px}
 #tuneBtn{position:absolute;right:calc(6px + env(safe-area-inset-right));top:6px;z-index:4;
   background:rgba(22,29,25,.86);border:1px solid var(--line);color:var(--ink-3);
   font-family:var(--f-m);font-size:.62rem;font-weight:600;padding:.28rem .45rem;border-radius:4px;cursor:pointer}
@@ -92,6 +96,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
 <canvas id="cv"></canvas>
 <div id="rods"></div>
 <div id="pow"></div>
+<div id="hint"><span>↕ placer</span><span>↔ frapper</span></div>
 <button id="tuneBtn">RÉG</button>
 
 <div id="ov" class="on"><div class="box">
@@ -692,58 +697,69 @@ function draw(){
 
 /* ------------------------------ gestes --------------------------- */
 const powBar=document.getElementById('pow');
-let G=null;
+// L'écran est coupé en deux : moitié gauche = placer la barre, moitié droite =
+// frapper. Plus aucun départage de geste à faire, donc plus de tir accidentel.
+// Deux pointeurs suivis en parallèle, un par moitié : on place et on frappe en
+// même temps, un pouce de chaque côté.
+let Gs=null, Gf=null;
 const guard=t=>!!(t.closest&&(t.closest('#rods')||t.closest('#tune')||t.closest('#ov')||t.closest('#tuneBtn')));
 
 addEventListener('pointerdown',e=>{
   if(guard(e.target)||S.phase!=='play') return;
-  G={id:e.pointerId,px:e.clientX,py:e.clientY,
-     pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],kind:null,vtr:0,lastV:0};
+  const g={id:e.pointerId,px:e.clientX,py:e.clientY,
+           pts:[{x:e.clientX,y:e.clientY,t:performance.now()}],fired:false};
+  if(e.clientX < innerWidth/2){ if(!Gs) Gs=g; } else { if(!Gf) Gf=g; }
   e.preventDefault();
 },{passive:false});
 
-addEventListener('pointermove',e=>{
-  if(!G||e.pointerId!==G.id) return;
-  const now=performance.now(),x=e.clientX,y=e.clientY,dy=y-G.py;
-  G.pts.push({x,y,t:now});
-  while(G.pts.length>2&&now-G.pts[0].t>240) G.pts.shift();
-  const w0=G.pts.find(q=>now-q.t<=P.win)||G.pts[0];
-  const tdx=Math.abs(x-w0.x), tdy=Math.abs(y-w0.y);
-
-  if(G.kind!=='flick'){
-    if(tdy>=tdx) G.kind='slide';
-    else if(tdx>tdy*1.25&&tdx>P.trv){
-      const dt=Math.max(16,now-w0.t), vx=(x-w0.x)/dt*1000;
-      if(Math.abs(vx)>260){
-        const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/Math.max(200,P.pwv)));
-        const susp=(G.vtr>40)&&(now-G.lastV<160);
-        if(S.sel>=0){
-          const dir=(Math.sign(x-w0.x)||1)*(FLIP()?-1:1);
-          // l'inclinaison de la chiquenaude choisit la zone : à plat, angle haut, angle bas
-          const rat=(y-w0.y)/Math.max(1,Math.abs(x-w0.x));
-          let z = rat>0.28 ? 1 : rat<-0.28 ? -1 : 0;
-          if(FLIP()) z=-z;
-          fireKick(S.sel,dir,pw,z);
-          if(!isHost()) send({k:[S.sel,dir,pw,z]});
-          S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),zone:z,suspect:susp,ms:Date.now()-S.t0});
-          powBar.style.width=(pw*100).toFixed(0)+'%';
-          setTimeout(()=>powBar.style.width='0%',350);
-        }
-        G=null; e.preventDefault(); return;
-      }
-    }
-  }
-  if(G.kind==='slide'&&dy!==0){
-    G.vtr+=Math.abs(dy); G.lastV=now;
+function moveSlide(g,x,y){
+  const dy=y-g.py;
+  if(dy!==0){
     const r=RODS[S.sel];
     if(r&&r.team===S.me){
       const d=(dy/Math.max(.001,V.s))*(FLIP()?-1:1);
       r.tgt=Math.max(-r.span,Math.min(r.span,r.tgt+d));
     }
   }
-  G.px=x; G.py=y; e.preventDefault();
+  g.px=x; g.py=y;
+}
+function moveFlick(g,x,y,now){
+  if(g.fired) return;
+  const w0=g.pts.find(q=>now-q.t<=P.win)||g.pts[0];
+  const dx=x-w0.x, dy=y-w0.y;
+  if(Math.abs(dx)<P.trv || Math.abs(dx)<Math.abs(dy)*0.8) return;
+  const dt=Math.max(16,now-w0.t), vx=dx/dt*1000;
+  if(Math.abs(vx)<=260) return;
+  const pw=Math.max(0,Math.min(1,(Math.abs(vx)-260)/Math.max(200,P.pwv)));
+  if(S.sel>=0){
+    const dir=(Math.sign(dx)||1)*(FLIP()?-1:1);
+    // l'inclinaison de la chiquenaude choisit la zone : à plat, angle haut, angle bas
+    const rat=dy/Math.max(1,Math.abs(dx));
+    let z = rat>0.28 ? 1 : rat<-0.28 ? -1 : 0;
+    if(FLIP()) z=-z;
+    fireKick(S.sel,dir,pw,z);
+    if(!isHost()) send({k:[S.sel,dir,pw,z]});
+    S.log.push({t:'flick',m:S.matchN,rod:RODS[S.sel].kind,pow:+pw.toFixed(2),zone:z,ms:Date.now()-S.t0});
+    powBar.style.width=(pw*100).toFixed(0)+'%';
+    setTimeout(()=>powBar.style.width='0%',350);
+  }
+  g.fired=true; Gf=null;
+}
+
+addEventListener('pointermove',e=>{
+  const now=performance.now(), x=e.clientX, y=e.clientY;
+  for(const g of [Gs,Gf]){
+    if(!g||g.id!==e.pointerId) continue;
+    g.pts.push({x,y,t:now});
+    while(g.pts.length>2&&now-g.pts[0].t>240) g.pts.shift();
+    if(g===Gs) moveSlide(g,x,y); else moveFlick(g,x,y,now);
+    e.preventDefault();
+  }
 },{passive:false});
-['pointerup','pointercancel'].forEach(ev=>addEventListener(ev,e=>{ if(G&&e.pointerId===G.id) G=null; },{passive:false}));
+['pointerup','pointercancel'].forEach(ev=>addEventListener(ev,e=>{
+  if(Gs&&Gs.id===e.pointerId) Gs=null;
+  if(Gf&&Gf.id===e.pointerId) Gf=null;
+},{passive:false}));
 
 /* ------------------------------ UI ------------------------------- */
 function buildRods(){
@@ -783,6 +799,7 @@ setInterval(()=>{
 function chrome(){
   const playing = S.phase==='play'||S.phase==='pause'||S.phase==='goal';
   document.getElementById('tuneBtn').style.display = playing ? 'none' : '';
+  document.getElementById('hint').style.display = playing ? '' : 'none';
   if(playing) document.getElementById('tune').classList.remove('on');
 }
 function fs(){ const e=document.documentElement;
@@ -800,9 +817,9 @@ function overlay(){
   if(S.phase==='menu'){
     show('Babyfoot',
      'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
-     '<b>Boutons à gauche</b> pour changer de barre — ou <b>AUTO</b> pour qu\'elle se choisisse seule · '+
-     '<b>glisser ↕</b> n\'importe où pour la déplacer · '+
-     '<b>claquer ↔</b> pour frapper.<br>'+
+     'L\'écran est coupé en deux : <b>moitié gauche, glisser ↕</b> pour placer la barre · '+
+     '<b>moitié droite, claquer ↔</b> pour frapper. Un pouce de chaque côté, en même temps.<br>'+
+     'Les <b>boutons de gauche</b> changent de barre — ou <b>AUTO</b> pour qu\'elle se choisisse seule.<br>'+
      'Le pied a une <b>portée</b>. Toucher un homme, c\'est lui donner la balle — viser les '+
      '<b>intervalles entre figurines</b> est tout le jeu. '+
      'La balle <b>hérite du mouvement de ta barre</b> : coulisser puis claquer, c\'est le tir tiré.<br>'+
@@ -858,7 +875,7 @@ document.getElementById('dumpBtn').onclick=()=>{
   const miss=Math.max(0,f.length-k.length);
   const traps=S.log.filter(e=>e.t==='trap'&&e.team===S.me);
   const pass=traps.filter(e=>e.from===S.me).length;
-  const susp=f.filter(e=>e.suspect).length;
+  const susp=f.filter(e=>e.suspect).length;   // ~0 depuis la séparation de l'écran
   const rem=S.log.filter(e=>e.t==='rematch').length;
   const fg=S.log.filter(e=>e.t==='firstgoal').map(e=>(e.ms/1000).toFixed(0)+'s').join(' ');
   document.getElementById('logout').value=
