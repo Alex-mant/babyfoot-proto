@@ -43,9 +43,8 @@ fonctionnent **en même temps** : on place et on frappe simultanément.
 | Colonne de gauche | toucher | sélectionner la barre — rangées dans leur ordre spatial sur le terrain |
 | Colonne de gauche | **AUTO** | la barre se choisit seule. Elle ne se **déplace** jamais seule : toucher une barre à la main coupe le mode |
 | **Moitié gauche** | glisser ↕ | faire coulisser la barre sélectionnée (indirect : le doigt ne masque pas la table) |
-| **Moitié droite** | claquer ↔ | frapper |
-| Moitié droite | inclinaison du claquement | choisit la zone du pied : à plat, angle haut, angle bas |
-| Moitié droite | vitesse du claquement | puissance du tir |
+| **Moitié droite** | glisser ↔ | **le pouce est la poignée** : la barre tourne avec lui, s'arrête où on s'arrête, retombe quand on lâche |
+| Moitié droite | vitesse du glissement | la puissance, qui n'est plus un réglage — elle sort de la vitesse à laquelle on tourne |
 
 La séparation supprime tout départage de geste, donc le tir accidentel en
 plaçant — qui était la principale source de frustration — n'est plus possible.
@@ -58,6 +57,13 @@ attaquent vers la droite de leur écran.
 
 L'objectif est de reproduire fidèlement une vraie table, pas d'approcher sa
 sensation avec des raccourcis.
+
+**Les proportions.** La figurine mesure 95 mm de l'axe de la barre au pied,
+comme un vrai homme de babyfoot (~110 mm de haut, barre au sommet). Ce n'est pas
+un détail : avec une figurine deux fois trop courte, les zones d'atteinte des
+barres ne se recouvrent plus et le croisement des barres cesse de fonctionner.
+Les barres rouges à 225 et 525 laissent un trou de 110 mm entre elles — trou que
+la barre bleue à 375 couvre exactement. C'est la géométrie voulue.
 
 **La figurine est un pendule.** La barre a deux degrés de liberté : elle coulisse
 le long de son axe et elle **tourne** autour. Au repos la figurine pend sous son
@@ -80,14 +86,16 @@ vaut `L(1 − cos θ)` ; au-delà du diamètre de la balle, il n'y a plus de con
 C'est ce qui rend le tour complet coûteux — et le tour complet est de toute façon
 borné à ±180°, comme la roulette est interdite en compétition.
 
-**La main qui tient la poignée.** Le rappel est gravitaire, mais l'amortissement
-modélise la main : sur une vraie table les hommes n'oscillent jamais librement,
-ils reviennent en position de blocage et y restent. Le curseur est exprimé en
-fraction de l'**amortissement critique** — 1 signifie retour franc sans rebond,
-quelle que soit la longueur de la figurine ou la pesanteur choisie.
+**La main tient la poignée.** La rotation n'est pas une impulsion : le pouce
+donne l'angle en continu. La barre suit à la vitesse du poignet, s'arrête où l'on
+s'arrête — on peut donc **lever un homme et l'y garder**, ce qui était impossible
+tant que chaque rotation revenait toute seule. Main lâchée, le rappel gravitaire
+amorti la ramène en position de blocage.
 
-Avec les valeurs par défaut : pulsation propre 13,4 rad/s, amortissement critique
-26,7 /s, angle crête à pleine puissance 73°, coup en 37 ms, pied à 1870 mm/s.
+L'amortissement est exprimé en fraction du **critique** : 1 = retour franc sans
+rebond, quelle que soit la longueur de figurine ou la pesanteur choisie.
+
+Le bout du pied atteint 2090 mm/s à pleine vitesse de poignet.
 
 **L'adhérence.** Au contact, la vitesse relative balle/pied est décomposée : le
 choc normal fait rebondir, le frottement tangentiel entraîne. C'est ce qui permet
