@@ -48,17 +48,22 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   font-family:var(--f-m);font-size:.62rem;font-weight:600;padding:.28rem .45rem;border-radius:4px;cursor:pointer}
 
 #ov{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
-  background:rgba(15,20,17,.94);padding:1rem;text-align:center}
+  background:rgba(15,20,17,.94);padding:.6rem;text-align:center;overflow:hidden}
 #ov.on{display:flex}
-#ov .box{max-width:33rem;width:100%}
-#ov h2{font-size:clamp(1.25rem,5vw,1.8rem);font-weight:800;margin:0 0 .4rem;letter-spacing:-.02em}
-#ov p{color:var(--ink-2);font-size:.82rem;margin:0 0 .9rem;line-height:1.55}
-#ov .btns{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
-.bigbtn{font-family:var(--f-d);font-weight:600;font-size:.9rem;padding:.6rem 1.15rem;border-radius:6px;
-  cursor:pointer;border:1px solid var(--line);background:var(--sunk);color:var(--ink);min-width:7.5rem}
+/* colonne : titre et boutons fixes, seul le texte defile. Les boutons restent
+   donc visibles quelle que soit la longueur de l'explication. */
+#ov .box{max-width:33rem;width:100%;max-height:100%;min-height:0;
+  display:flex;flex-direction:column}
+#ov h2{flex:0 0 auto;font-size:clamp(1.1rem,4.5vh,1.7rem);font-weight:800;margin:0 0 .35rem;letter-spacing:-.02em}
+#ov p{flex:1 1 auto;min-height:0;overflow:auto;color:var(--ink-2);
+  font-size:clamp(.72rem,2.1vh,.85rem);margin:0 0 .6rem;line-height:1.5}
+#ov .btns{flex:0 0 auto;display:flex;gap:.45rem;justify-content:center;flex-wrap:wrap}
+.bigbtn{font-family:var(--f-d);font-weight:600;font-size:clamp(.78rem,2.4vh,.9rem);
+  padding:clamp(.4rem,1.6vh,.6rem) 1.05rem;border-radius:6px;
+  cursor:pointer;border:1px solid var(--line);background:var(--sunk);color:var(--ink);min-width:6.5rem}
 .bigbtn.pri{background:var(--green);border-color:var(--green);color:#07110C}
 .bigbtn:active{transform:translateY(1px)}
-#code{font-family:var(--f-m);font-size:2.2rem;font-weight:600;letter-spacing:.3em;
+#code{font-family:var(--f-m);font-size:clamp(1.5rem,6vh,2.2rem);font-weight:600;letter-spacing:.3em;
   color:var(--green);margin:.3rem 0 .1rem;text-indent:.3em}
 #codein{font-family:var(--f-m);font-size:1.6rem;font-weight:600;letter-spacing:.25em;text-align:center;
   text-transform:uppercase;width:8em;padding:.4rem;background:var(--sunk);color:var(--ink);
@@ -717,17 +722,10 @@ function overlay(){
   const err=NET.err?'<br><br><b style="color:#D65445">'+NET.err+'</b>':'';
   if(S.phase==='menu'){
     show('Babyfoot',
-     'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
-     'La figurine est un <b>pendule</b> : elle pend au repos — c\'est la position de blocage — '+
-     'et la chiquenaude ne fait que lui donner de l\'élan. Elle frappe la balle où qu\'elle soit '+
-     'sur son arc, puis revient — comme une main qui tient la poignée. '+
-     '<b>Trop haute, elle laisse passer la balle dessous.</b><br><br>'+
-     'Écran coupé en deux : <b>moitié gauche, glisser ↕</b> pour coulisser · '+
-     '<b>moitié droite : ton pouce est la poignée.</b> Tu glisses, la barre tourne ; tu t\'arrêtes, '+
-     'elle reste à l\'angle où tu l\'as laissée ; tu lâches, elle retombe. La puissance sort de la '+
-     'vitesse à laquelle tu tournes. '+
-     'Le pied <b>adhère</b> : balance la barre pour aller chercher une balle sur le côté, '+
-     'elle suit et s\'arrête avec toi.'+err,
+     'Match en '+WIN_SCORE+' buts.<br>'+
+     '<b>Gauche</b> ↕ coulisser · <b>droite</b> ↔ tourner — ton pouce est la poignée, '+
+     'la vitesse du geste donne la puissance.<br>'+
+     'Les boutons de gauche choisissent la barre.'+err,
      [['Solo',()=>{fs();NET.mode='off';S.me=0;newMatch(false);},true],
       ['Créer une partie',()=>{fs();doHost();}],
       ['Rejoindre',()=>{fs();S.phase='code';overlay();}]]);
