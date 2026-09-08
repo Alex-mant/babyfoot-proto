@@ -99,7 +99,7 @@ canvas{display:block;width:100%;height:100%;position:absolute;inset:0}
   <div class="tr"><label>Longueur de la figurine (mm)</label><output id="o_lf"></output><input type="range" id="i_lf" min="35" max="85" step="1"></div>
   <div class="tr"><label>Vitesse angulaire max (rad/s)</label><output id="o_omax"></output><input type="range" id="i_omax" min="8" max="60" step="1"></div>
   <div class="tr"><label>Pesanteur (× réel)</label><output id="o_grav"></output><input type="range" id="i_grav" min="0.2" max="3" step="0.05"></div>
-  <div class="tr"><label>Amortissement rotation (/s)</label><output id="o_adamp"></output><input type="range" id="i_adamp" min="0.4" max="8" step="0.1"></div>
+  <div class="tr"><label>Amortissement (1 = critique)</label><output id="o_zeta"></output><input type="range" id="i_zeta" min="0.2" max="2.5" step="0.05"></div>
   <div class="tr"><label>Adhérence du pied</label><output id="o_grip"></output><input type="range" id="i_grip" min="0" max="0.95" step="0.02"></div>
   <div class="tr"><label>Restitution du pied</label><output id="o_figr"></output><input type="range" id="i_figr" min="0.05" max="0.7" step="0.01"></div>
   <div class="tr"><label>Arrondi du pied (mm)</label><output id="o_crn"></output><input type="range" id="i_crn" min="0" max="8" step="0.5"></div>
@@ -157,14 +157,14 @@ const T0=[0,1,3,5], T1=[2,4,6,7];
 const MYRODS=t=>t===0?T0:T1;
 
 const DEF={
-  lf:55, omax:26, grav:1, adamp:2.6,
+  lf:55, omax:34, grav:1, zeta:1.0,
   grip:0.55, figr:0.22, crn:4,
   wall:0.70, fric:0.90, vmax:2600, slew:1500,
-  stall:2.5, ast:0, ai:0.55,
+  stall:3.0, ast:0, ai:0.55,
   trv:25, win:120, pwv:2600,
 };
 let P=Object.assign({},DEF);
-try{const t=localStorage.getItem('bf6_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
+try{const t=localStorage.getItem('bf7_tune'); if(t)P=Object.assign(P,JSON.parse(t));}catch(e){}
 
 const S={
   phase:'menu', score:[0,0], me:0, sel:-1,
@@ -215,10 +215,13 @@ function stepRods(h){
     r.off+=step; r.vy=(h>0)?step/h:0;
     r.off=Math.max(-r.span,Math.min(r.span,r.off));
 
-    // rotation : pendule amorti. La figurine retombe d'elle-même en
-    // position de blocage, exactement comme sur une vraie table.
-    r.om -= (G*P.grav/P.lf)*Math.sin(r.th)*h;
-    r.om *= Math.exp(-P.adamp*h);
+    // Rotation. Le rappel est gravitaire, mais l'amortissement modélise la
+    // MAIN qui tient la poignée : sur une vraie table les hommes n'oscillent
+    // jamais librement, ils reviennent en position de blocage et y restent.
+    // zeta = 1 : amortissement critique, retour franc sans rebond.
+    const k=G*P.grav/P.lf;                 // pulsation propre au carré
+    const c=2*P.zeta*Math.sqrt(k);
+    r.om += (-k*Math.sin(r.th) - c*r.om)*h;
     r.th += r.om*h;
     // pas de roulette : le tour complet est interdit, comme en compétition
     if(r.th> Math.PI){ r.th= Math.PI; r.om=Math.min(0,r.om); }
@@ -295,6 +298,18 @@ const DZONE=[
   RODS.find(r=>r.team===0&&r.kind==='D').x,
   RODS.find(r=>r.team===1&&r.kind==='D').x,
 ];
+// une figurine peut-elle atteindre la balle, barre poussée à fond ?
+function reachable(){
+  const b=S.ball;
+  for(const r of RODS){
+    if(Math.abs(b.x-r.x) > P.lf+FHX+BR) continue;
+    for(let i=0;i<r.n;i++){
+      const c=H/2+(i-(r.n-1)/2)*r.sp;      // position au repos, sans coulissement
+      if(Math.abs(b.y-c) <= r.span+FHY+BR) return true;
+    }
+  }
+  return false;
+}
 function revive(){
   const b=S.ball;
   let own=-1;
@@ -307,7 +322,7 @@ function revive(){
       if(d<bd){ bd=d; bx=r.x; by=fy; }
     }
   }
-  const dx=bx-b.x, dy=by-b.y, len=Math.hypot(dx,dy)||1, v=P.vmax*0.18;
+  const dx=bx-b.x, dy=by-b.y, len=Math.hypot(dx,dy)||1, v=P.vmax*0.10;
   b.vx=dx/len*v; b.vy=dy/len*v;
   S.log.push({t:'revive',m:S.matchN,zone:own,ms:Date.now()-S.t0});
 }
@@ -372,8 +387,11 @@ function loop(now){
     while(acc>=DT&&!res){ res=stepPhysics(DT); acc-=DT; }
     S.trail.push(S.ball.x,S.ball.y); if(S.trail.length>260) S.trail.splice(0,2);
     if(isHost()){
-      if(Math.hypot(S.ball.vx,S.ball.vy)<90) S.stall+=dr; else S.stall=0;
-      if(S.stall>P.stall){ revive(); S.stall=0; }
+      // Une balle lente n'est pas une balle morte : le critère est qu'aucune
+      // figurine ne puisse l'atteindre. Sinon on ne relance qu'après un délai
+      // bien plus long, en dernier recours.
+      if(Math.hypot(S.ball.vx,S.ball.vy)<60) S.stall+=dr; else S.stall=0;
+      if(S.stall > (reachable()?P.stall*3:P.stall)){ revive(); S.stall=0; }
       if(res) goal(res==='g0'?0:1);
     }
     netAcc+=dr; if(netAcc>=1/60){ netAcc=0; netTick(); }
@@ -689,7 +707,8 @@ function overlay(){
      'Temps réel. Match en '+WIN_SCORE+' buts.<br><br>'+
      'La figurine est un <b>pendule</b> : elle pend au repos — c\'est la position de blocage — '+
      'et la chiquenaude ne fait que lui donner de l\'élan. Elle frappe la balle où qu\'elle soit '+
-     'sur son arc, puis retombe. <b>Trop haute, elle laisse passer la balle dessous.</b><br><br>'+
+     'sur son arc, puis revient — comme une main qui tient la poignée. '+
+     '<b>Trop haute, elle laisse passer la balle dessous.</b><br><br>'+
      'Écran coupé en deux : <b>moitié gauche, glisser ↕</b> pour coulisser · '+
      '<b>moitié droite, claquer ↔</b> pour lancer la rotation, la vitesse du geste donne l\'élan. '+
      'Le pied <b>adhère</b> : balance la barre pour aller chercher une balle sur le côté, '+
@@ -748,7 +767,7 @@ document.getElementById('dumpBtn').onclick=()=>{
 };
 
 /* ---------------------------- réglages --------------------------- */
-const KEYS=['lf','omax','grav','adamp','grip','figr','crn','wall','fric','vmax','slew','stall','ast','ai','trv','win','pwv'];
+const KEYS=['lf','omax','grav','zeta','grip','figr','crn','wall','fric','vmax','slew','stall','ast','ai','trv','win','pwv'];
 const INT={lf:1,omax:1,vmax:1,slew:1,trv:1,win:1,pwv:1};
 function syncTune(){
   KEYS.forEach(k=>{
@@ -756,13 +775,13 @@ function syncTune(){
     const fmt=v=>INT[k]?v:(+v).toFixed(2);
     i.value=P[k]; o.textContent=fmt(P[k]);
     i.oninput=()=>{P[k]=+i.value;o.textContent=fmt(P[k]);
-      try{localStorage.setItem('bf6_tune',JSON.stringify(P));}catch(e){}
+      try{localStorage.setItem('bf7_tune',JSON.stringify(P));}catch(e){}
       if(NET.mode==='host') sendCfg(); else if(NET.mode==='guest') send({cf:[k,+i.value]});};
   });
 }
 document.getElementById('tuneBtn').onclick=()=>document.getElementById('tune').classList.toggle('on');
 document.getElementById('resetBtn').onclick=()=>{P=Object.assign({},DEF);syncTune();
-  try{localStorage.setItem('bf6_tune',JSON.stringify(P));}catch(e){}
+  try{localStorage.setItem('bf7_tune',JSON.stringify(P));}catch(e){}
   if(NET.mode==='host') sendCfg();};
 document.getElementById('menuBtn').onclick=()=>{
   document.getElementById('tune').classList.remove('on');

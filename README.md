@@ -80,6 +80,15 @@ vaut `L(1 − cos θ)` ; au-delà du diamètre de la balle, il n'y a plus de con
 C'est ce qui rend le tour complet coûteux — et le tour complet est de toute façon
 borné à ±180°, comme la roulette est interdite en compétition.
 
+**La main qui tient la poignée.** Le rappel est gravitaire, mais l'amortissement
+modélise la main : sur une vraie table les hommes n'oscillent jamais librement,
+ils reviennent en position de blocage et y restent. Le curseur est exprimé en
+fraction de l'**amortissement critique** — 1 signifie retour franc sans rebond,
+quelle que soit la longueur de la figurine ou la pesanteur choisie.
+
+Avec les valeurs par défaut : pulsation propre 13,4 rad/s, amortissement critique
+26,7 /s, angle crête à pleine puissance 73°, coup en 37 ms, pied à 1870 mm/s.
+
 **L'adhérence.** Au contact, la vitesse relative balle/pied est décomposée : le
 choc normal fait rebondir, le frottement tangentiel entraîne. C'est ce qui permet
 de balancer la barre pour aller chercher une balle sur le côté : elle suit le
@@ -90,8 +99,11 @@ collée.
 donc rien n'est jamais franchement droit. Le rectangle à angles arrondis donne
 une face plate qui renvoie droit et des angles qui ouvrent les diagonales.
 
-**La balle morte.** Immobile plus de 2,5 s, elle roule doucement vers une
-figurine. Derrière une barre de défense, elle revient **obligatoirement à l'équipe
+**La balle morte.** Une balle lente n'est pas une balle morte : le critère est
+qu'**aucune figurine ne puisse l'atteindre**, barre poussée à fond. Dans ce cas
+elle roule doucement vers une figurine au bout de 3 s. Si elle est atteignable
+mais que personne ne la joue, la relance n'intervient qu'au bout de 9 s, en
+dernier recours. Derrière une barre de défense, elle revient **obligatoirement à l'équipe
 qui défend ce but** — sinon l'adversaire hérite d'une balle devant un but dégarni
 alors que le défenseur aurait dû la récupérer. C'est la règle ITSF de la balle
 morte entre le but et la barre de 2.
@@ -123,7 +135,7 @@ sinon tu ne sauras pas lequel a fait quoi.
 | 1 | Vitesse angulaire max | la puissance des tirs, puisque la balle part à la vitesse du pied |
 | 2 | Longueur de la figurine | la portée, la hauteur à laquelle elle se lève, et la vitesse du pied à angle égal |
 | 3 | Adhérence du pied | si l'on peut mener la balle ou si elle fuit |
-| 4 | Amortissement rotation | le temps que met la figurine à retomber en position de blocage |
+| 4 | Amortissement | 1 = critique, retour franc sans rebond. En dessous la figurine ballotte, au-dessus elle est molle |
 | 5 | Pesanteur | la vivacité du rappel. À 1, c'est la pesanteur réelle |
 | 6 | Restitution des bandes | la profondeur des bandes. Sans prévisualisation, un rebond qui semble arbitraire est un rebond dont on n'apprend rien |
 | 7 | Vitesse pour puissance max | si l'élan est un vrai curseur sous le pouce ou un interrupteur tout-ou-rien |
